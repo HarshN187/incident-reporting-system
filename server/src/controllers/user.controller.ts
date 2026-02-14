@@ -4,17 +4,19 @@ import {
   IAuthRequest,
   IApiResponse,
   IPaginationResult,
+  IAuthenticatedRequest,
 } from "../types/api.types";
-import { IUser, UserRole, UserStatus } from "../types/user.types";
+import { IUser, IUserFilter, UserRole, UserStatus } from "../types/user.types";
 import { AuditAction } from "../types/audit.types";
 import { asyncHandler } from "../middlewares";
 import { AuditService } from "../services";
+import { RootFilterQuery } from "mongoose";
 
 // @desc    Get all users
 // @route   GET /api/v1/users
 // @access  Private (Super Admin)
 export const getAllUsers = asyncHandler(
-  async (req: IAuthRequest, res: Response) => {
+  async (req: IAuthenticatedRequest<IUserFilter>, res: Response) => {
     const {
       page = "1",
       limit = "10",
@@ -24,10 +26,10 @@ export const getAllUsers = asyncHandler(
       sortBy = "-createdAt",
     } = req.query;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = parseInt(String(page));
+    const limitNum = parseInt(String(limit));
 
-    const query: any = {};
+    const query: RootFilterQuery<typeof UserModel> = {};
 
     if (role) query.role = role;
     if (status) query.status = status;
@@ -45,7 +47,7 @@ export const getAllUsers = asyncHandler(
 
     const users = await UserModel.find(query)
       .select("-password")
-      .sort(sortBy as string)
+      .sort(sortBy)
       .limit(limitNum)
       .skip((pageNum - 1) * limitNum)
       .lean();
@@ -53,7 +55,7 @@ export const getAllUsers = asyncHandler(
     const response: IApiResponse<IPaginationResult<IUser>> = {
       success: true,
       data: {
-        data: users as IUser[],
+        data: users,
         pagination: {
           page: pageNum,
           limit: limitNum,
@@ -80,13 +82,13 @@ export const getUser = asyncHandler(
       res.status(404).json({
         success: false,
         message: "User not found",
-      } as IApiResponse);
+      });
       return;
     }
 
     const response: IApiResponse<IUser> = {
       success: true,
-      data: user as unknown as IUser,
+      data: user,
     };
 
     res.status(200).json(response);
@@ -109,7 +111,7 @@ export const createUser = asyncHandler(
       res.status(400).json({
         success: false,
         message: "User already exists with this email or username",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -133,7 +135,7 @@ export const createUser = asyncHandler(
     const response: IApiResponse<IUser> = {
       success: true,
       message: "User created successfully",
-      data: user as unknown as IUser,
+      data: user,
     };
 
     res.status(201).json(response);
@@ -154,7 +156,7 @@ export const updateUser = asyncHandler(
       res.status(404).json({
         success: false,
         message: "User not found",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -177,7 +179,7 @@ export const updateUser = asyncHandler(
     const response: IApiResponse<IUser> = {
       success: true,
       message: "User updated successfully",
-      data: user as unknown as IUser,
+      data: user,
     };
 
     res.status(200).json(response);
@@ -197,7 +199,7 @@ export const deleteUser = asyncHandler(
       res.status(404).json({
         success: false,
         message: "User not found",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -206,7 +208,7 @@ export const deleteUser = asyncHandler(
       res.status(400).json({
         success: false,
         message: "You cannot delete your own account",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -235,7 +237,7 @@ export const changeUserRole = asyncHandler(
       res.status(400).json({
         success: false,
         message: "Invalid role",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -245,7 +247,7 @@ export const changeUserRole = asyncHandler(
       res.status(404).json({
         success: false,
         message: "User not found",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -272,7 +274,7 @@ export const changeUserRole = asyncHandler(
     const response: IApiResponse<IUser> = {
       success: true,
       message: "User role updated successfully",
-      data: user as unknown as IUser,
+      data: user,
     };
 
     res.status(200).json(response);
@@ -292,7 +294,7 @@ export const blockUser = asyncHandler(
       res.status(404).json({
         success: false,
         message: "User not found",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -300,7 +302,7 @@ export const blockUser = asyncHandler(
       res.status(400).json({
         success: false,
         message: "You cannot block yourself",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -316,7 +318,7 @@ export const blockUser = asyncHandler(
     const response: IApiResponse<IUser> = {
       success: true,
       message: "User blocked successfully",
-      data: user as unknown as IUser,
+      data: user,
     };
 
     res.status(200).json(response);
@@ -336,7 +338,7 @@ export const unblockUser = asyncHandler(
       res.status(404).json({
         success: false,
         message: "User not found",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -353,7 +355,7 @@ export const unblockUser = asyncHandler(
     const response: IApiResponse<IUser> = {
       success: true,
       message: "User unblocked successfully",
-      data: user as unknown as IUser,
+      data: user,
     };
 
     res.status(200).json(response);

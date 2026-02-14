@@ -69,11 +69,7 @@ export const updateStatusSchema = Joi.object({
 });
 
 export const bulkUpdateSchema = Joi.object({
-  incidentIds: Joi.array()
-    // .items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/))
-    .min(1)
-    .max(100)
-    .required(),
+  incidentIds: Joi.array().min(1).max(100).required(),
   status: Joi.string()
     .valid("open", "in_progress", "resolved", "closed", "rejected")
     .optional(),

@@ -19,7 +19,7 @@ export const uploadEvidence = asyncHandler(
       res.status(400).json({
         success: false,
         message: "No files uploaded",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -34,7 +34,6 @@ export const uploadEvidence = asyncHandler(
       uploadedAt: new Date(),
     }));
 
-    // Log upload
     await AuditService.log({
       action: AuditAction.FILE_UPLOADED,
       performedBy: req.user!.userId,
@@ -71,13 +70,12 @@ export const deleteEvidence = asyncHandler(
       res.status(404).json({
         success: false,
         message: "File not found",
-      } as IApiResponse);
+      });
       return;
     }
 
     fs.unlinkSync(filePath);
 
-    // Log deletion
     await AuditService.log({
       action: AuditAction.FILE_DELETED,
       performedBy: req.user!.userId,
@@ -110,7 +108,7 @@ export const downloadEvidence = asyncHandler(
       res.status(404).json({
         success: false,
         message: "File not found",
-      } as IApiResponse);
+      });
       return;
     }
 

@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import analyticsService from "../services/analytics.service";
 
 export const analyticsKeys = {
-  all: ["analytics"] as const,
-  dashboard: () => [...analyticsKeys.all, "dashboard"] as const,
-  trends: (days: number) => [...analyticsKeys.all, "trends", days] as const,
+  all: ["analytics"],
+  dashboard: () => [...analyticsKeys.all, "dashboard"],
+  trends: (days: number) => [...analyticsKeys.all, "trends", days],
 };
 
 export const useDashboardAnalytics = () => {
@@ -14,7 +14,7 @@ export const useDashboardAnalytics = () => {
       const response = await analyticsService.getDashboardAnalytics();
       return response.data;
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 2,
   });
 };
 
@@ -25,6 +25,6 @@ export const useIncidentTrends = (days: number = 30) => {
       const response = await analyticsService.getIncidentTrends(days);
       return response.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 };

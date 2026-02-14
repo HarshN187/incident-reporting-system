@@ -4,12 +4,11 @@ import type { User, ApiResponse, PaginatedResponse } from "../types";
 import { toast } from "react-toastify";
 
 export const userKeys = {
-  all: ["users"] as const,
-  lists: () => [...userKeys.all, "list"] as const,
-  list: (filters: Record<string, any>) =>
-    [...userKeys.lists(), filters] as const,
-  details: () => [...userKeys.all, "detail"] as const,
-  detail: (id: string) => [...userKeys.details(), id] as const,
+  all: ["users"],
+  lists: () => [...userKeys.all, "list"],
+  list: (filters: Record<string, any>) => [...userKeys.lists(), filters],
+  details: () => [...userKeys.all, "detail"],
+  detail: (id: string) => [...userKeys.details(), id],
 };
 
 export const useUsers = (filters: Record<string, any> = {}) => {
@@ -25,7 +24,6 @@ export const useUsers = (filters: Record<string, any> = {}) => {
       const response = await api.get<ApiResponse<PaginatedResponse<User>>>(
         `/users?${params.toString()}`,
       );
-      console.log("🚀 ~ useUsers ~ response:", response);
       return response.data;
     },
   });
@@ -44,8 +42,8 @@ export const useChangeUserRole = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast.success("User role updated successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update role");
+    onError: () => {
+      toast.error("Failed to update role");
     },
   });
 };
@@ -60,8 +58,8 @@ export const useBlockUser = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast.success("User blocked successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to block user");
+    onError: (_error) => {
+      toast.error("Failed to block user");
     },
   });
 };
@@ -76,8 +74,8 @@ export const useUnblockUser = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast.success("User unblocked successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to unblock user");
+    onError: () => {
+      toast.error("Failed to unblock user");
     },
   });
 };
@@ -91,8 +89,8 @@ export const useDeleteUser = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast.success("User deleted successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to delete user");
+    onError: (error) => {
+      toast.error("Failed to delete user");
     },
   });
 };
@@ -117,8 +115,8 @@ export const useCreateUser = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast.success("User created successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create user");
+    onError: () => {
+      toast.error("Failed to create user");
     },
   });
 };
@@ -149,8 +147,8 @@ export const useUpdateUser = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       toast.success("User updated successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update user");
+    onError: (error) => {
+      toast.error("Failed to update user");
     },
   });
 };

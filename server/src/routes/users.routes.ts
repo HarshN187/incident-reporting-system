@@ -24,7 +24,6 @@ import {
 
 const router: Router = express.Router();
 
-// All routes require authentication and Super Admin role
 router.use(verifyAccessToken);
 router.use(checkRolePermission(UserRole.SUPERADMIN));
 

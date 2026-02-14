@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import analyticsService from '../../services/analytics.service';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import analyticsService from "../../services/analytics.service";
 import {
   Box,
   Grid,
@@ -9,18 +9,17 @@ import {
   Card,
   CardContent,
   Button,
-} from '@mui/material';
+} from "@mui/material";
 import {
   PeopleAlt as PeopleIcon,
   Report as ReportIcon,
   Assessment as AssessmentIcon,
   Security as SecurityIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 export const SuperAdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchStats();
@@ -36,9 +35,7 @@ export const SuperAdminDashboard: React.FC = () => {
         setStats(analyticsRes.data);
       }
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    } finally {
-      setLoading(false);
+      console.error("Failed to fetch stats:", error);
     }
   };
 
@@ -52,12 +49,14 @@ export const SuperAdminDashboard: React.FC = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card
-            sx={{ cursor: 'pointer' }}
-            onClick={() => navigate('/superadmin/users')}
+            sx={{ cursor: "pointer" }}
+            onClick={() => navigate("/superadmin/users")}
           >
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <PeopleIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <PeopleIcon
+                  sx={{ fontSize: 40, color: "primary.main", mr: 2 }}
+                />
                 <Typography variant="h6">User Management</Typography>
               </Box>
               <Button size="small" variant="outlined" fullWidth>
@@ -69,12 +68,14 @@ export const SuperAdminDashboard: React.FC = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <Card
-            sx={{ cursor: 'pointer' }}
-            onClick={() => navigate('/admin/dashboard')}
+            sx={{ cursor: "pointer" }}
+            onClick={() => navigate("/admin/dashboard")}
           >
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <ReportIcon sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <ReportIcon
+                  sx={{ fontSize: 40, color: "warning.main", mr: 2 }}
+                />
                 <Typography variant="h6">Incidents</Typography>
               </Box>
               <Button size="small" variant="outlined" fullWidth>
@@ -86,13 +87,13 @@ export const SuperAdminDashboard: React.FC = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <Card
-            sx={{ cursor: 'pointer' }}
-            onClick={() => navigate('/admin/analytics')}
+            sx={{ cursor: "pointer" }}
+            onClick={() => navigate("/admin/analytics")}
           >
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <AssessmentIcon
-                  sx={{ fontSize: 40, color: 'success.main', mr: 2 }}
+                  sx={{ fontSize: 40, color: "success.main", mr: 2 }}
                 />
                 <Typography variant="h6">Analytics</Typography>
               </Box>
@@ -105,12 +106,14 @@ export const SuperAdminDashboard: React.FC = () => {
 
         <Grid item xs={12} sm={6} md={3}>
           <Card
-            sx={{ cursor: 'pointer' }}
-            onClick={() => navigate('/superadmin/audit-logs')}
+            sx={{ cursor: "pointer" }}
+            onClick={() => navigate("/superadmin/audit-logs")}
           >
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <SecurityIcon sx={{ fontSize: 40, color: 'error.main', mr: 2 }} />
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <SecurityIcon
+                  sx={{ fontSize: 40, color: "error.main", mr: 2 }}
+                />
                 <Typography variant="h6">Audit Logs</Typography>
               </Box>
               <Button size="small" variant="outlined" fullWidth>
@@ -125,7 +128,7 @@ export const SuperAdminDashboard: React.FC = () => {
       {stats && (
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 3, textAlign: 'center' }}>
+            <Paper sx={{ p: 3, textAlign: "center" }}>
               <Typography variant="h3" color="primary">
                 {stats.totalIncidents}
               </Typography>
@@ -134,7 +137,7 @@ export const SuperAdminDashboard: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 3, textAlign: 'center' }}>
+            <Paper sx={{ p: 3, textAlign: "center" }}>
               <Typography variant="h3" color="warning.main">
                 {stats.statusStats.open}
               </Typography>
@@ -143,7 +146,7 @@ export const SuperAdminDashboard: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 3, textAlign: 'center' }}>
+            <Paper sx={{ p: 3, textAlign: "center" }}>
               <Typography variant="h3" color="success.main">
                 {stats.statusStats.resolved}
               </Typography>
@@ -152,7 +155,7 @@ export const SuperAdminDashboard: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 3, textAlign: 'center' }}>
+            <Paper sx={{ p: 3, textAlign: "center" }}>
               <Typography variant="h3" color="info.main">
                 {stats.averageResolutionTime.hours}h
               </Typography>

@@ -37,7 +37,7 @@ export const IncidentList: React.FC = () => {
     setFilters((prev) => ({
       ...prev,
       [field]: value,
-      page: 1, // Reset to first page on filter change
+      page: 1,
     }));
   };
 
@@ -157,7 +157,7 @@ export const IncidentList: React.FC = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              data?.data.map((incident: any) => (
+              data?.data.map((incident) => (
                 <TableRow key={incident._id} hover>
                   <TableCell>{incident.title}</TableCell>
                   <TableCell>

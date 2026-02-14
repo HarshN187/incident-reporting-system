@@ -96,7 +96,7 @@ class IncidentService {
       { format, filters },
       { responseType: "blob" },
     );
-    return response as unknown as Blob;
+    return response as Blob;
   }
 }
 

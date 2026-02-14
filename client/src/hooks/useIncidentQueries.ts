@@ -4,13 +4,12 @@ import type { IncidentCreate } from "../types";
 import { toast } from "react-toastify";
 
 export const incidentKeys = {
-  all: ["incidents"] as const,
-  lists: () => [...incidentKeys.all, "list"] as const,
-  list: (filters: Record<string, any>) =>
-    [...incidentKeys.lists(), filters] as const,
-  details: () => [...incidentKeys.all, "detail"] as const,
-  detail: (id: string) => [...incidentKeys.details(), id] as const,
-  myIncidents: () => [...incidentKeys.all, "my-incidents"] as const,
+  all: ["incidents"],
+  lists: () => [...incidentKeys.all, "list"],
+  list: (filters: Record<string, any>) => [...incidentKeys.lists(), filters],
+  details: () => [...incidentKeys.all, "detail"],
+  detail: (id: string) => [...incidentKeys.details(), id],
+  myIncidents: () => [...incidentKeys.all, "my-incidents"],
 };
 
 export const useIncidents = (filters: Record<string, any> = {}) => {
@@ -43,8 +42,8 @@ export const useCreateIncident = () => {
       queryClient.invalidateQueries({ queryKey: incidentKeys.lists() });
       toast.success("Incident created successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create incident");
+    onError: () => {
+      toast.error("Failed to create incident");
     },
   });
 };
@@ -69,8 +68,8 @@ export const useUpdateIncidentStatus = () => {
       queryClient.invalidateQueries({ queryKey: incidentKeys.lists() });
       toast.success("Status updated successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update status");
+    onError: () => {
+      toast.error("Failed to update status");
     },
   });
 };
@@ -92,10 +91,8 @@ export const useBulkUpdateIncidents = () => {
       queryClient.invalidateQueries({ queryKey: incidentKeys.lists() });
       toast.success("Incidents updated successfully");
     },
-    onError: (error: any) => {
-      toast.error(
-        error.response?.data?.message || "Failed to update incidents",
-      );
+    onError: () => {
+      toast.error("Failed to update incidents");
     },
   });
 };
@@ -126,8 +123,8 @@ export const useExportIncidents = () => {
       window.URL.revokeObjectURL(url);
       toast.success("Export started");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Export failed");
+    onError: () => {
+      toast.error("Export failed");
     },
   });
 };
@@ -145,8 +142,8 @@ export const useAssignIncident = () => {
       });
       toast.success("Incident assigned successfully");
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to assign incident");
+    onError: () => {
+      toast.error("Failed to assign incident");
     },
   });
 };

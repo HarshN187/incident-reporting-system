@@ -48,6 +48,7 @@ import {
   useIncidents,
 } from "../../hooks";
 import { useSocket } from "../../context/SocketContext";
+import type { User } from "../../types";
 
 const COLORS = {
   open: "#FF6B6B",
@@ -88,13 +89,11 @@ const AdminDashboard: React.FC = () => {
   React.useEffect(() => {
     if (!socket) return;
 
-    const onCreated = (data: any) => {
-      // refetch incidents/analytics when new incident arrives
+    const onCreated = () => {
       refetch();
-      // optional: refetch analytics hook if available
     };
 
-    const onUpdated = (data: any) => {
+    const onUpdated = () => {
       refetch();
     };
 
@@ -109,7 +108,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const allIds = incidents?.data.map((inc: any) => inc._id) || [];
+      const allIds = incidents?.data.map((inc) => inc._id) || [];
       setSelectedIncidents(allIds);
     } else {
       setSelectedIncidents([]);
@@ -476,7 +475,7 @@ const AdminDashboard: React.FC = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              incidents?.data.map((incident: any) => (
+              incidents?.data.map((incident) => (
                 <TableRow key={incident._id} hover>
                   <TableCell padding="checkbox">
                     <Checkbox
@@ -499,7 +498,7 @@ const AdminDashboard: React.FC = () => {
                   </TableCell>
                   <TableCell>{incident.severity}/10</TableCell>
                   <TableCell>
-                    {incident.reportedBy?.username || "N/A"}
+                    {(incident.reportedBy as User)?.username || "N/A"}
                   </TableCell>
                   <TableCell>
                     {format(new Date(incident.createdAt), "MMM dd, yyyy")}

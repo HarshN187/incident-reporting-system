@@ -6,6 +6,7 @@ import { exportToCSV, exportToPDF } from "../utils";
 import { IncidentModel } from "../models";
 import { AuditService } from "../services";
 import { AuditAction, AuditTargetType } from "../types";
+import { RootFilterQuery } from "mongoose";
 
 // @desc    Export incidents
 // @route   POST /api/v1/export/incidents
@@ -14,8 +15,7 @@ export const exportIncidents = asyncHandler(
   async (req: IAuthRequest, res: Response) => {
     const { format, filters = {} } = req.body;
 
-    // Build query
-    const query: any = {};
+    const query: RootFilterQuery<typeof IncidentModel> = {};
 
     if (filters.status) query.status = filters.status;
     if (filters.category) query.category = filters.category;
@@ -28,7 +28,6 @@ export const exportIncidents = asyncHandler(
       };
     }
 
-    // Fetch incidents
     const incidents = await IncidentModel.find(query)
       .populate("reportedBy", "username email")
       .populate("assignedTo", "username email")
@@ -36,8 +35,7 @@ export const exportIncidents = asyncHandler(
       .sort({ createdAt: -1 })
       .lean();
 
-    // Log export
-    await AuditService. log({
+    await AuditService.log({
       action: AuditAction.DATA_EXPORT,
       performedBy: req.user!.userId,
       userRole: req.user!.role,
@@ -67,6 +65,7 @@ export const exportIncidents = asyncHandler(
         if (err) {
           console.error("Download error:", err);
         }
+
         // Delete file after sending
         fs.unlinkSync(filepath);
       });
@@ -74,7 +73,7 @@ export const exportIncidents = asyncHandler(
       res.status(400).json({
         success: false,
         message: 'Invalid format. Use "csv" or "pdf"',
-      } as IApiResponse);
+      });
     }
   },
 );

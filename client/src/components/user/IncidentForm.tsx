@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import { Delete, CloudUpload } from "@mui/icons-material";
 import { toast } from "react-toastify";
+import axios from "axios";
 import type { IncidentCategory, IncidentPriority } from "../../types";
 
 const API_URL =
@@ -85,103 +86,88 @@ const IncidentForm: React.FC = () => {
     setTags(tags.filter((tag) => tag !== tagToDelete));
   };
 
-  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
+  const MAX_FILES = 5;
+  const MAX_SIZE = 10 * 1024 * 1024;
 
-    // Validate file count
-    if (evidenceFiles.length + files.length > 5) {
-      toast.error("Maximum 5 files allowed");
-      event.target.value = ""; // Reset input
+  const allowedTypes = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ]);
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const input = event.target;
+    const files = input.files;
+
+    if (!files?.length) return;
+
+    const selectedFiles = Array.from(files);
+
+    if (evidenceFiles.length + selectedFiles.length > MAX_FILES) {
+      toast.error(`Maximum ${MAX_FILES} files allowed`);
+      input.value = "";
       return;
     }
 
-    // Validate file size (10MB each)
-    const MAX_SIZE = 10 * 1024 * 1024;
-    for (let i = 0; i < files.length; i++) {
-      if (files[i].size > MAX_SIZE) {
-        toast.error(`File ${files[i].name} exceeds 10MB limit`);
-        event.target.value = ""; // Reset input
+    for (const file of selectedFiles) {
+      if (file.size > MAX_SIZE) {
+        toast.error(`${file.name} exceeds 10MB limit`);
+        input.value = "";
+        return;
+      }
+
+      if (!allowedTypes.has(file.type)) {
+        toast.error(`${file.name} type is not allowed`);
+        input.value = "";
         return;
       }
     }
-
-    // Validate file types
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-
-    for (let i = 0; i < files.length; i++) {
-      if (!allowedTypes.includes(files[i].type)) {
-        toast.error(`File type ${files[i].type} is not allowed`);
-        event.target.value = ""; // Reset input
-        return;
-      }
-    }
-
-    setUploadingFiles(true);
-    setUploadProgress(0);
 
     try {
+      setUploadingFiles(true);
+      setUploadProgress(0);
+
       const formData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        formData.append("evidence", files[i]);
+      selectedFiles.forEach((file) => {
+        formData.append("evidence", file);
+      });
+
+      const response = await axios.post(
+        `${API_URL}/upload/evidence`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percent = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total,
+              );
+              setUploadProgress(percent);
+            }
+          },
+        },
+      );
+
+      if (!response.data.success) {
+        toast.error(response.data.message || "Upload failed");
+        return;
       }
 
-      const xhr = new XMLHttpRequest();
-
-      // Track upload progress
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = (e.loaded / e.total) * 100;
-          setUploadProgress(percentComplete);
-        }
-      });
-
-      // Handle completion
-      xhr.addEventListener("load", () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          if (response.success) {
-            // Add uploaded files to state
-            setEvidenceFiles([...evidenceFiles, ...response.data]);
-            toast.success(`${files.length} file(s) uploaded successfully`);
-            event.target.value = ""; // Reset input
-          } else {
-            toast.error(response.message || "Upload failed");
-          }
-        } else {
-          toast.error("Upload failed");
-        }
-        setUploadingFiles(false);
-        setUploadProgress(0);
-      });
-
-      // Handle error
-      xhr.addEventListener("error", () => {
-        toast.error("Upload failed");
-        setUploadingFiles(false);
-        setUploadProgress(0);
-      });
-
-      // Send request
-      xhr.open("POST", `${API_URL}/upload/evidence`);
-      xhr.setRequestHeader(
-        "Authorization",
-        `Bearer ${localStorage.getItem("accessToken")}`,
-      );
-      xhr.send(formData);
+      setEvidenceFiles((prev) => [...prev, ...response.data.data]);
+      toast.success(`${selectedFiles.length} file(s) uploaded successfully`);
+      input.value = "";
     } catch (error: any) {
-      console.error("Upload error:", error);
-      toast.error("File upload failed");
+      toast.error(error.response?.data?.message || "File upload failed");
+    } finally {
       setUploadingFiles(false);
       setUploadProgress(0);
-      event.target.value = ""; // Reset input
     }
   };
 
@@ -192,11 +178,9 @@ const IncidentForm: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("🔥 Form Submitted");
 
     setValidationError("");
 
-    // Validation
     if (!formData.title || formData.title.length < 5) {
       setValidationError("Title must be at least 5 characters");
       return;
@@ -212,7 +196,6 @@ const IncidentForm: React.FC = () => {
       return;
     }
 
-    // Prepare incident data with evidence files
     const incidentData = {
       title: formData.title,
       description: formData.description,
@@ -220,19 +203,15 @@ const IncidentForm: React.FC = () => {
       priority: formData.priority as IncidentPriority,
       severity: Number(formData.severity),
       tags: tags,
-      evidenceFiles: evidenceFiles, // Include uploaded files
+      evidenceFiles: evidenceFiles,
     };
-    console.log("🚀 ~ handleSubmit ~ incidentData:", incidentData);
 
     createIncidentMutation.mutate(incidentData, {
       onSuccess: () => {
         navigate("/incidents");
       },
-      onError: (error: any) => {
-        console.error("Create incident error:", error);
-        setValidationError(
-          error.response?.data?.message || "Failed to create incident",
-        );
+      onError: () => {
+        setValidationError("Failed to create incident");
       },
     });
   };
@@ -252,8 +231,7 @@ const IncidentForm: React.FC = () => {
 
         {createIncidentMutation.isError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {createIncidentMutation.error?.response?.data?.message ||
-              "Failed to create incident"}
+            "Failed to create incident"
           </Alert>
         )}
 

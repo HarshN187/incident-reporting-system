@@ -1,5 +1,5 @@
 import { Document, Types } from "mongoose";
-import { UserRole } from "./user.types";
+import { IUser, UserRole } from "./user.types";
 
 export enum AuditAction {
   // Incident Actions
@@ -57,7 +57,7 @@ export interface IChangeLog {
 export interface IAuditLog {
   _id: Types.ObjectId;
   action: AuditAction;
-  performedBy: Types.ObjectId;
+  performedBy: Types.ObjectId | IUser;
   userRole: UserRole;
   targetType: AuditTargetType;
   targetId?: string;
@@ -83,4 +83,8 @@ export interface IAuditFilters {
   ipAddress?: string;
   startDate?: Date;
   endDate?: Date;
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  incidentId?: string;
 }

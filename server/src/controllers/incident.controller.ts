@@ -3,6 +3,7 @@ import {
   IAuthRequest,
   IApiResponse,
   IPaginationResult,
+  IAuthenticatedRequest,
 } from "../types/api.types";
 import {
   IIncidentCreate,
@@ -11,12 +12,14 @@ import {
   IncidentStatus,
   IBulkUpdate,
   IIncident,
+  IIncidentFilters,
 } from "../types/incident.types";
-import { UserRole } from "../types/user.types";
+import { IUser, UserRole } from "../types/user.types";
 import { asyncHandler } from "../middlewares";
-import { IncidentModel } from "../models";
+import { IncidentModel, UserModel } from "../models";
 import { AuditService } from "../services";
 import { AuditAction, AuditTargetType } from "../types";
+import { RootFilterQuery } from "mongoose";
 
 // @desc    Create new incident
 // @route   POST /api/v1/incidents
@@ -45,7 +48,6 @@ export const createIncident = asyncHandler(
       tags: tags || [],
     });
 
-    // Log incident creation
     await AuditService.logIncidentCreated(req, incident);
 
     // Emit socket event to admins
@@ -72,7 +74,7 @@ export const createIncident = asyncHandler(
 // @route   GET /api/v1/incidents
 // @access  Private
 export const getIncidents = asyncHandler(
-  async (req: IAuthRequest, res: Response) => {
+  async (req: IAuthenticatedRequest<IIncidentFilters>, res: Response) => {
     const {
       page = "1",
       limit = "10",
@@ -83,38 +85,34 @@ export const getIncidents = asyncHandler(
       search,
     } = req.query;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
 
-    // Build query based on user role
-    const query: any = {};
+    const query: RootFilterQuery<typeof UserModel> = {};
 
     // Users can only see their own incidents
     if (req.user!.role === UserRole.USER) {
       query.reportedBy = req.user!.userId;
     }
 
-    // Apply filters
     if (status) query.status = status;
     if (category) query.category = category;
     if (priority) query.priority = priority;
 
-    // Search functionality
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
       ];
     }
-    console.log(query);
-    // Execute query with pagination
+
     const totalCount = await IncidentModel.countDocuments(query);
 
     const incidents = await IncidentModel.find(query)
       .populate("reportedBy", "username email")
       .populate("assignedTo", "username email")
       .populate("resolvedBy", "username email")
-      .sort(sortBy as string)
+      .sort(String(sortBy))
       .limit(limitNum)
       .skip((pageNum - 1) * limitNum)
       .lean<IIncident[]>();
@@ -152,17 +150,17 @@ export const getIncident = asyncHandler(
       res.status(404).json({
         success: false,
         message: "Incident not found",
-      } as IApiResponse);
+      });
       return;
     }
 
-    // Check permissions
+    // Checking permissions
     if (req.user!.role === UserRole.USER) {
-      if (incident.reportedBy._id.toString() !== req.user!.userId) {
+      if ((incident.reportedBy as IUser)._id.toString() !== req.user!.userId) {
         res.status(403).json({
           success: false,
           message: "You can only view your own incidents",
-        } as IApiResponse);
+        });
         return;
       }
     }
@@ -190,14 +188,12 @@ export const updateIncident = asyncHandler(
       res.status(404).json({
         success: false,
         message: "Incident not found",
-      } as IApiResponse);
+      });
       return;
     }
 
-    // Store old data for audit
     const oldData = incident.toObject();
 
-    // Update fields
     if (updateData.title) incident.title = updateData.title;
     if (updateData.description) incident.description = updateData.description;
     if (updateData.category) incident.category = updateData.category;
@@ -211,7 +207,6 @@ export const updateIncident = asyncHandler(
 
     await incident.save();
 
-    // Log update
     await AuditService.logIncidentUpdated(req, incident, oldData);
 
     // Notify incident owner
@@ -247,29 +242,25 @@ export const updateIncidentStatus = asyncHandler(
       res.status(404).json({
         success: false,
         message: "Incident not found",
-      } as IApiResponse);
+      });
       return;
     }
 
     const oldStatus = incident.status;
 
-    // Update status
-    incident.status = status as IncidentStatus;
+    incident.status = status;
 
-    // If resolving, add resolution data
     if (status === IncidentStatus.RESOLVED) {
       incident.resolvedAt = new Date();
       incident.resolvedBy = req.user!.userId;
       incident.resolutionNotes = resolutionNotes || "";
 
-      // Calculate resolution time
       const resolutionTime = Math.floor(
         (incident.resolvedAt.getTime() - incident.createdAt.getTime()) / 60000,
       );
       incident.resolutionTime = resolutionTime;
     }
 
-    // Add to activity log
     incident.activityLog.push({
       action: "status_changed",
       performedBy: req.user!.userId,
@@ -279,7 +270,6 @@ export const updateIncidentStatus = asyncHandler(
 
     await incident.save();
 
-    // Log status change
     await AuditService.logIncidentUpdated(req, incident, { status: oldStatus });
 
     // Notify incident owner
@@ -316,14 +306,13 @@ export const assignIncident = asyncHandler(
       res.status(404).json({
         success: false,
         message: "Incident not found",
-      } as IApiResponse);
+      });
       return;
     }
 
     const oldAssignee = incident.assignedTo;
     incident.assignedTo = assignedTo;
 
-    // Add to activity log
     incident.activityLog.push({
       action: "assigned",
       performedBy: req.user!.userId,
@@ -333,7 +322,6 @@ export const assignIncident = asyncHandler(
 
     await incident.save();
 
-    // Log assignment
     await AuditService.logIncidentUpdated(req, incident, {
       assignedTo: oldAssignee,
     });
@@ -362,25 +350,16 @@ export const bulkUpdateIncidents = asyncHandler(
   async (req: IAuthRequest, res: Response) => {
     const { incidentIds, status, assignedTo, resolutionNotes }: IBulkUpdate =
       req.body;
-    console.log("🚀 ~ incidentIds:", incidentIds);
 
     if (!incidentIds || incidentIds.length === 0) {
       res.status(400).json({
         success: false,
         message: "No incident IDs provided",
-      } as IApiResponse);
+      });
       return;
     }
 
-    // Get incidents before update
-    // const incidents = await IncidentModel.find({ _id: { $in: incidentIds } });
-    // const beforeStates = incidents.map((inc) => ({
-    //   id: inc._id.toString(),
-    //   status: inc.status,
-    // }));
-
-    // Prepare update data
-    const updateData: any = {
+    const updateData: Partial<IIncident> = {
       updatedAt: new Date(),
     };
 
@@ -407,7 +386,7 @@ export const bulkUpdateIncidents = asyncHandler(
       { $set: updateData },
     );
 
-    // Calculate resolution time for resolved incidents
+    // Calculate resolution time
     if (status === IncidentStatus.RESOLVED) {
       for (const id of incidentIds) {
         const incident = await IncidentModel.findById(id);
@@ -421,7 +400,6 @@ export const bulkUpdateIncidents = asyncHandler(
       }
     }
 
-    // Log bulk action
     await AuditService.logBulkAction(
       req,
       "bulk_status_update",
@@ -473,13 +451,12 @@ export const deleteIncident = asyncHandler(
       res.status(404).json({
         success: false,
         message: "Incident not found",
-      } as IApiResponse);
+      });
       return;
     }
 
     await incident.deleteOne();
 
-    // Log deletion
     await AuditService.log({
       action: AuditAction.INCIDENT_DELETED,
       performedBy: req.user!.userId,
@@ -500,13 +477,11 @@ export const deleteIncident = asyncHandler(
   },
 );
 
-// Add this method to the incident controller
-
 // @desc    Get my incidents (current user)
 // @route   GET /api/v1/incidents/my-incidents
 // @access  Private
 export const getMyIncidents = asyncHandler(
-  async (req: IAuthRequest, res: Response) => {
+  async (req: IAuthenticatedRequest<IIncidentFilters>, res: Response) => {
     const {
       page = "1",
       limit = "10",
@@ -517,19 +492,17 @@ export const getMyIncidents = asyncHandler(
       search,
     } = req.query;
 
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
 
-    const query: any = {
+    const query: RootFilterQuery<typeof IncidentModel> = {
       reportedBy: req.user!.userId,
     };
 
-    // Apply filters
     if (status) query.status = status;
     if (category) query.category = category;
     if (priority) query.priority = priority;
 
-    // Search functionality
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -542,7 +515,7 @@ export const getMyIncidents = asyncHandler(
     const incidents = await IncidentModel.find(query)
       .populate("assignedTo", "username email")
       .populate("resolvedBy", "username email")
-      .sort(sortBy as string)
+      .sort(String(sortBy))
       .limit(limitNum)
       .skip((pageNum - 1) * limitNum)
       .lean<IIncident[]>();

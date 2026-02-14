@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { UserRole } from "./user.types";
+import { IUser, UserRole } from "./user.types";
 import {
   IIncidentDocument,
   IncidentCategory,
@@ -8,6 +8,19 @@ import {
 } from "./incident.types";
 
 export interface IAuthRequest extends Request {
+  user?: {
+    userId: string;
+    role: UserRole;
+    email: string;
+    username: string;
+  };
+  incident?: IIncidentDocument;
+}
+export interface IAuthenticatedRequest<
+  TQuery = {},
+  TParams = {},
+  TBody = {},
+> extends Request<TParams, any, TBody, TQuery> {
   user?: {
     userId: string;
     role: UserRole;

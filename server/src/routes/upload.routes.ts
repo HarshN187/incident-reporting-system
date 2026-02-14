@@ -8,7 +8,6 @@ import { upload, uploadLimiter, verifyAccessToken } from "../middlewares";
 
 const router: Router = express.Router();
 
-// All routes require authentication
 router.use(verifyAccessToken);
 
 router.post(

@@ -74,3 +74,19 @@ export interface IJWTPayload {
   iat?: number;
   exp?: number;
 }
+
+export interface IUserFilter {
+  email?: string;
+  password?: string;
+  role?: UserRole;
+  status?: UserStatus;
+  firstName?: string;
+  lastName?: string;
+  department?: string;
+  createdAt?: Date;
+  createdBy?: string;
+  page?: string;
+  limit?: string;
+  search?: string;
+  sortBy?: string;
+}

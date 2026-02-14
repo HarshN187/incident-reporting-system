@@ -26,7 +26,6 @@ import {
 
 const router: Router = express.Router();
 
-// All routes require authentication
 router.use(verifyAccessToken);
 
 // User routes

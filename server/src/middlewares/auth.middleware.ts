@@ -21,13 +21,11 @@ export const verifyAccessToken = async (
 
     const token = authHeader.split(" ")[1];
 
-    // Verify token
     const decoded = jwt.verify(
       token,
       process.env.JWT_ACCESS_SECRET!,
     ) as IJWTPayload;
 
-    // Check if user exists and is active
     const user = await UserModel.findById(decoded.userId).select("-password");
 
     if (!user) {
@@ -46,7 +44,7 @@ export const verifyAccessToken = async (
       return;
     }
 
-    // Check if password was changed after token was issued
+    // Checking if password was changed after token was issue
     if (user.passwordChangedAt && decoded.iat) {
       const passwordChangedTimestamp = user.passwordChangedAt.getTime() / 1000;
       if (decoded.iat < passwordChangedTimestamp) {
@@ -58,7 +56,6 @@ export const verifyAccessToken = async (
       }
     }
 
-    // Attach user to request object
     req.user = {
       userId: user._id.toString(),
       role: user.role,

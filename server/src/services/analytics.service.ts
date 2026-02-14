@@ -10,10 +10,8 @@ import { IncidentStatus } from "../types/incident.types";
 
 export class AnalyticsService {
   static async getDashboardAnalytics(): Promise<IDashboardAnalytics> {
-    // Total incidents count
     const totalIncidents = await IncidentModel.countDocuments();
 
-    // Status breakdown
     const statusBreakdown = await IncidentModel.aggregate([
       {
         $group: {
@@ -31,11 +29,10 @@ export class AnalyticsService {
       rejected: 0,
     };
 
-    statusBreakdown.forEach((item: any) => {
+    statusBreakdown.forEach((item) => {
       statusStats[item._id as keyof IStatusStats] = item.count;
     });
 
-    // Category breakdown
     const categoryBreakdown = await IncidentModel.aggregate([
       {
         $group: {
@@ -48,14 +45,11 @@ export class AnalyticsService {
       },
     ]);
 
-    const categoryData: ICategoryData[] = categoryBreakdown.map(
-      (item: any) => ({
-        category: item._id,
-        count: item.count,
-      }),
-    );
+    const categoryData: ICategoryData[] = categoryBreakdown.map((item) => ({
+      category: item._id,
+      count: item.count,
+    }));
 
-    // Average resolution time
     const avgResolutionTime = await IncidentModel.aggregate([
       {
         $match: {
@@ -80,7 +74,6 @@ export class AnalyticsService {
       averageResolutionTimeMinutes / 60
     ).toFixed(2);
 
-    // Resolution time trend (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -106,7 +99,7 @@ export class AnalyticsService {
     ]);
 
     const trendData: IResolutionTimeData[] = resolutionTimeTrend.map(
-      (item: any) => ({
+      (item) => ({
         date: item._id,
         avgResolutionTime: parseFloat((item.avgResolutionTime / 60).toFixed(2)),
         count: item.count,
@@ -130,7 +123,7 @@ export class AnalyticsService {
       critical: 0,
     };
 
-    priorityBreakdown.forEach((item: any) => {
+    priorityBreakdown.forEach((item) => {
       priorityStats[item._id as keyof IPriorityStats] = item.count;
     });
 
@@ -194,7 +187,7 @@ export class AnalyticsService {
       },
     ]);
 
-    return breakdown.map((item: any) => ({
+    return breakdown.map((item) => ({
       category: item._id,
       count: item.count,
     }));
@@ -218,7 +211,7 @@ export class AnalyticsService {
       rejected: 0,
     };
 
-    breakdown.forEach((item: any) => {
+    breakdown.forEach((item) => {
       stats[item._id as keyof IStatusStats] = item.count;
     });
 
@@ -340,7 +333,7 @@ export class AnalyticsService {
       critical: 0,
     };
 
-    distribution.forEach((item: any) => {
+    distribution.forEach((item) => {
       stats[item._id as keyof IPriorityStats] = item.count;
     });
 

@@ -41,6 +41,7 @@ import {
   PersonAdd,
 } from "@mui/icons-material";
 import { format } from "date-fns";
+import type { User } from "../../types";
 
 const UserManagement: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -52,7 +53,6 @@ const UserManagement: React.FC = () => {
   });
 
   const { data, isLoading, refetch } = useUsers(filters);
-  console.log("🚀 ~ UserManagement ~ data:", data)
   const changeRoleMutation = useChangeUserRole();
   const blockMutation = useBlockUser();
   const unblockMutation = useUnblockUser();
@@ -117,13 +117,13 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const openRoleDialog = (user: any) => {
+  const openRoleDialog = (user: User) => {
     setSelectedUser(user);
     setNewRole(user.role);
     setRoleDialogOpen(true);
   };
 
-  const openEditDialog = (user: any) => {
+  const openEditDialog = (user: User) => {
     setSelectedUser(user);
     setFormData({
       username: user.username,
@@ -151,7 +151,6 @@ const UserManagement: React.FC = () => {
   };
 
   const handleCreateUser = () => {
-    // Validate required fields
     if (!formData.username || !formData.email || !formData.password) {
       alert("Please fill in all required fields");
       return;
@@ -177,7 +176,7 @@ const UserManagement: React.FC = () => {
   const handleUpdateUser = () => {
     if (!selectedUser) return;
 
-    const updateData: any = {
+    const updateData: Partial<User> = {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
@@ -288,7 +287,7 @@ const UserManagement: React.FC = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              data?.data?.map((user: any) => (
+              data?.data?.map((user: User) => (
                 <TableRow key={user._id} hover>
                   <TableCell>{user.username}</TableCell>
                   <TableCell>{user.email}</TableCell>

@@ -78,7 +78,7 @@ class ApiService {
 
   async post<T>(
     url: string,
-    data?: any,
+    data?: Record<string, any>,
     config?: AxiosRequestConfig,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.api.post(url, data, config);
@@ -87,7 +87,7 @@ class ApiService {
 
   async put<T>(
     url: string,
-    data?: any,
+    data?: Record<string, any>,
     config?: AxiosRequestConfig,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.api.put(url, data, config);
@@ -96,7 +96,7 @@ class ApiService {
 
   async patch<T>(
     url: string,
-    data?: any,
+    data?: Record<string, any>,
     config?: AxiosRequestConfig,
   ): Promise<T> {
     const response: AxiosResponse<T> = await this.api.patch(url, data, config);

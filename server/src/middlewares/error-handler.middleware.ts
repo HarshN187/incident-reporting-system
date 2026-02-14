@@ -22,7 +22,6 @@ export const errorHandler = async (
 ): Promise<void> => {
   console.error(err.stack);
 
-  // Log error to audit trail for critical errors
   if (err.statusCode === 500 || !err.statusCode) {
     try {
       await AuditLogModel.create({
@@ -66,7 +65,7 @@ export const errorHandler = async (
     });
     return;
   }
-  console.log(err.message);
+
   // Mongoose cast error (invalid ObjectId)
   if (err.name === "CastError") {
     res.status(400).json({
@@ -103,8 +102,8 @@ export const errorHandler = async (
 };
 
 // Async handler wrapper
-export const asyncHandler = (
-  fn: (req: IAuthRequest, res: Response, next: NextFunction) => Promise<any>,
+export const asyncHandler = <T>(
+  fn: (req: IAuthRequest, res: Response, next: NextFunction) => Promise<T>,
 ) => {
   return (req: IAuthRequest, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);

@@ -7,6 +7,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   department?: string;
+  lastLogin?: Date;
   createdAt: string;
   updatedAt: string;
 }

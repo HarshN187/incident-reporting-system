@@ -58,7 +58,6 @@ const Layout: React.FC = () => {
   };
 
   const menuItems = [
-    // User Menu Items
     {
       text: "Dashboard",
       icon: <Dashboard />,

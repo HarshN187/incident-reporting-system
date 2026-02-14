@@ -1,13 +1,19 @@
 import { Response } from "express";
-import { IAuthRequest, IApiResponse, IAuditFilters } from "../types";
+import {
+  IAuthRequest,
+  IApiResponse,
+  IAuditFilters,
+  AuditAction,
+} from "../types";
 import { asyncHandler } from "../middlewares";
 import { AuditService } from "../services";
+import { Request } from "express";
 
 // @desc    Get all audit logs
 // @route   GET /api/v1/audit-logs
 // @access  Private (Super Admin)
 export const getAuditLogs = asyncHandler(
-  async (req: IAuthRequest, res: Response) => {
+  async (req: Request<{}, {}, {}, IAuditFilters>, res: Response) => {
     const {
       page = "1",
       limit = "50",
@@ -21,18 +27,18 @@ export const getAuditLogs = asyncHandler(
     } = req.query;
 
     const filters: IAuditFilters = {
-      action: action as any,
-      performedBy: performedBy as string,
-      targetType: targetType as any,
-      ipAddress: ipAddress as string,
-      startDate: startDate ? new Date(startDate as string) : undefined,
-      endDate: endDate ? new Date(endDate as string) : undefined,
+      action: action,
+      performedBy: performedBy,
+      targetType: targetType,
+      ipAddress: ipAddress,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
     };
 
     const result = await AuditService.queryLogs(filters, {
-      page: parseInt(page as string),
-      limit: parseInt(limit as string),
-      sortBy: sortBy as string,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sortBy: sortBy,
     });
 
     const response: IApiResponse = {
@@ -57,7 +63,7 @@ export const getAuditLog = asyncHandler(
       res.status(404).json({
         success: false,
         message: "Audit log not found",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -81,8 +87,8 @@ export const getUserAuditLogs = asyncHandler(
     const result = await AuditService.queryLogs(
       { performedBy: userId },
       {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
+        page: parseInt(String(page)),
+        limit: parseInt(String(limit)),
       },
     );
 
@@ -99,15 +105,15 @@ export const getUserAuditLogs = asyncHandler(
 // @route   GET /api/v1/audit-logs/incident/:incidentId
 // @access  Private (Super Admin)
 export const getIncidentAuditLogs = asyncHandler(
-  async (req: IAuthRequest, res: Response) => {
+  async (req: Request<IAuditFilters, {}, {}, IAuditFilters>, res: Response) => {
     const { incidentId } = req.params;
     const { page = "1", limit = "50" } = req.query;
 
     const result = await AuditService.queryLogs(
       { targetId: incidentId },
       {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
+        page: parseInt(page),
+        limit: parseInt(limit),
       },
     );
 
@@ -137,7 +143,7 @@ export const exportAuditLogs = asyncHandler(
       );
       res.send(result);
     } else {
-      res.download(result as string);
+      res.download(result);
     }
   },
 );

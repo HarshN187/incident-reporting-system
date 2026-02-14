@@ -116,7 +116,6 @@ incidentSchema.index({ assignedTo: 1, status: 1 });
 incidentSchema.index({ createdAt: -1 });
 incidentSchema.index({ priority: 1, status: 1 });
 
-// Pre-save middleware to calculate resolution time
 incidentSchema.pre("save", function (next) {
   if (
     this.isModified("status") &&

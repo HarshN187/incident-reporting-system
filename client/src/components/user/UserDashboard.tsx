@@ -54,12 +54,10 @@ const UserDashboard: React.FC = () => {
     if (incidents?.pagination) {
       setStats({
         total: incidents.pagination.totalCount,
-        open: incidents.data.filter((i: any) => i.status === "open").length,
-        inProgress: incidents.data.filter(
-          (i: any) => i.status === "in_progress",
-        ).length,
-        resolved: incidents.data.filter((i: any) => i.status === "resolved")
+        open: incidents.data.filter((i) => i.status === "open").length,
+        inProgress: incidents.data.filter((i) => i.status === "in_progress")
           .length,
+        resolved: incidents.data.filter((i) => i.status === "resolved").length,
       });
     }
   }, [incidents]);
@@ -207,7 +205,7 @@ const UserDashboard: React.FC = () => {
               </Typography>
             ) : (
               <List>
-                {incidents?.data.map((incident: any, index: number) => (
+                {incidents?.data.map((incident, index: number) => (
                   <React.Fragment key={incident._id}>
                     <ListItem
                       sx={{ cursor: "pointer" }}

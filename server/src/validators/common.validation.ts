@@ -15,21 +15,3 @@ export const dateRangeSchema = Joi.object({
   startDate: Joi.date().optional(),
   endDate: Joi.date().min(Joi.ref("startDate")).optional(),
 }).with("startDate", "endDate");
-
-// File upload validation
-export const fileUploadSchema = Joi.object({
-  filename: Joi.string().required(),
-  originalName: Joi.string().required(),
-  mimeType: Joi.string()
-    .valid(
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    )
-    .required(),
-  size: Joi.number().max(10485760).required(), // 10MB max
-  url: Joi.string().uri().required(),
-});

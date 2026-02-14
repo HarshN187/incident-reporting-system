@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import incidentService from '../../services/incident.service';
-import type { Incident } from '../../types';
-import { useAuth } from '../../context';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import incidentService from "../../services/incident.service";
+import type { Incident } from "../../types";
+import { useAuth } from "../../context";
 import {
   Box,
   Paper,
@@ -14,8 +14,8 @@ import {
   CircularProgress,
   Card,
   CardContent,
-} from '@mui/material';
-import { format } from 'date-fns';
+} from "@mui/material";
+import { format } from "date-fns";
 
 export const IncidentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,7 +24,7 @@ export const IncidentDetail: React.FC = () => {
 
   const [incident, setIncident] = useState<Incident | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     if (id) {
@@ -39,41 +39,41 @@ export const IncidentDetail: React.FC = () => {
         setIncident(response.data);
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch incident');
+      setError(err.response?.data?.message || "Failed to fetch incident");
     } finally {
       setLoading(false);
     }
   };
 
   const getStatusColor = (
-    status: string
-  ): 'default' | 'primary' | 'success' | 'warning' | 'error' => {
+    status: string,
+  ): "default" | "primary" | "success" | "warning" | "error" => {
     switch (status) {
-      case 'open':
-        return 'warning';
-      case 'in_progress':
-        return 'primary';
-      case 'resolved':
-        return 'success';
-      case 'closed':
-        return 'default';
+      case "open":
+        return "warning";
+      case "in_progress":
+        return "primary";
+      case "resolved":
+        return "success";
+      case "closed":
+        return "default";
       default:
-        return 'error';
+        return "error";
     }
   };
 
   const getPriorityColor = (
-    priority: string
-  ): 'default' | 'error' | 'warning' | 'info' => {
+    priority: string,
+  ): "default" | "error" | "warning" | "info" => {
     switch (priority) {
-      case 'critical':
-        return 'error';
-      case 'high':
-        return 'warning';
-      case 'medium':
-        return 'info';
+      case "critical":
+        return "error";
+      case "high":
+        return "warning";
+      case "medium":
+        return "info";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -88,8 +88,8 @@ export const IncidentDetail: React.FC = () => {
   if (error || !incident) {
     return (
       <Box p={4}>
-        <Typography color="error">{error || 'Incident not found'}</Typography>
-        <Button onClick={() => navigate('/incidents')} sx={{ mt: 2 }}>
+        <Typography color="error">{error || "Incident not found"}</Typography>
+        <Button onClick={() => navigate("/incidents")} sx={{ mt: 2 }}>
           Back to Incidents
         </Button>
       </Box>
@@ -98,7 +98,7 @@ export const IncidentDetail: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Button onClick={() => navigate('/incidents')} sx={{ mb: 2 }}>
+      <Button onClick={() => navigate("/incidents")} sx={{ mb: 2 }}>
         ← Back to Incidents
       </Button>
 
@@ -107,7 +107,7 @@ export const IncidentDetail: React.FC = () => {
           <Typography variant="h4" gutterBottom>
             {incident.title}
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
             <Chip
               label={incident.status.toUpperCase()}
               color={getStatusColor(incident.status)}
@@ -117,7 +117,7 @@ export const IncidentDetail: React.FC = () => {
               color={getPriorityColor(incident.priority)}
             />
             <Chip
-              label={incident.category.replace(/_/g, ' ').toUpperCase()}
+              label={incident.category.replace(/_/g, " ").toUpperCase()}
               variant="outlined"
             />
           </Box>
@@ -156,7 +156,7 @@ export const IncidentDetail: React.FC = () => {
                 <Typography variant="subtitle2" gutterBottom>
                   Tags:
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                   {incident.tags.map((tag, index) => (
                     <Chip key={index} label={tag} size="small" />
                   ))}
@@ -183,7 +183,9 @@ export const IncidentDetail: React.FC = () => {
                   <Typography variant="caption" color="textSecondary">
                     Severity
                   </Typography>
-                  <Typography variant="body2">{incident.severity}/10</Typography>
+                  <Typography variant="body2">
+                    {incident.severity}/10
+                  </Typography>
                 </Box>
 
                 <Box sx={{ mb: 2 }}>
@@ -191,9 +193,9 @@ export const IncidentDetail: React.FC = () => {
                     Reported By
                   </Typography>
                   <Typography variant="body2">
-                    {typeof incident.reportedBy === 'object'
+                    {typeof incident.reportedBy === "object"
                       ? incident.reportedBy.username
-                      : 'N/A'}
+                      : "N/A"}
                   </Typography>
                 </Box>
 
@@ -203,9 +205,9 @@ export const IncidentDetail: React.FC = () => {
                       Assigned To
                     </Typography>
                     <Typography variant="body2">
-                      {typeof incident.assignedTo === 'object'
+                      {typeof incident.assignedTo === "object"
                         ? incident.assignedTo.username
-                        : 'N/A'}
+                        : "N/A"}
                     </Typography>
                   </Box>
                 )}
@@ -215,7 +217,7 @@ export const IncidentDetail: React.FC = () => {
                     Created
                   </Typography>
                   <Typography variant="body2">
-                    {format(new Date(incident.createdAt), 'PPpp')}
+                    {format(new Date(incident.createdAt), "PPpp")}
                   </Typography>
                 </Box>
 
@@ -226,7 +228,7 @@ export const IncidentDetail: React.FC = () => {
                         Resolved
                       </Typography>
                       <Typography variant="body2">
-                        {format(new Date(incident.resolvedAt), 'PPpp')}
+                        {format(new Date(incident.resolvedAt), "PPpp")}
                       </Typography>
                     </Box>
 
@@ -236,7 +238,7 @@ export const IncidentDetail: React.FC = () => {
                           Resolution Time
                         </Typography>
                         <Typography variant="body2">
-                          {Math.floor(incident.resolutionTime / 60)} hours{' '}
+                          {Math.floor(incident.resolutionTime / 60)} hours{" "}
                           {incident.resolutionTime % 60} minutes
                         </Typography>
                       </Box>

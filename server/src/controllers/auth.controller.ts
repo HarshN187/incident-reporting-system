@@ -94,7 +94,7 @@ export const register = asyncHandler(
       res.status(400).json({
         success: false,
         message: "User already exists with this email or username",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -154,7 +154,7 @@ export const login = asyncHandler(async (req: IAuthRequest, res: Response) => {
     res.status(401).json({
       success: false,
       message: "Invalid credentials",
-    } as IApiResponse);
+    });
     return;
   }
 
@@ -169,7 +169,7 @@ export const login = asyncHandler(async (req: IAuthRequest, res: Response) => {
     res.status(403).json({
       success: false,
       message: "Your account has been blocked. Please contact support.",
-    } as IApiResponse);
+    });
     return;
   }
 
@@ -195,7 +195,7 @@ export const login = asyncHandler(async (req: IAuthRequest, res: Response) => {
       res.status(403).json({
         success: false,
         message: "Account blocked due to multiple failed login attempts",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -210,7 +210,7 @@ export const login = asyncHandler(async (req: IAuthRequest, res: Response) => {
     res.status(401).json({
       success: false,
       message: "Invalid credentials",
-    } as IApiResponse);
+    });
     return;
   }
 
@@ -261,7 +261,7 @@ export const refreshToken = asyncHandler(
       res.status(401).json({
         success: false,
         message: "Refresh token is required",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -283,7 +283,7 @@ export const refreshToken = asyncHandler(
       res.status(401).json({
         success: false,
         message: "Invalid or expired refresh token",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -294,7 +294,7 @@ export const refreshToken = asyncHandler(
       res.status(401).json({
         success: false,
         message: "User not found or blocked",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -351,7 +351,7 @@ export const getCurrentUser = asyncHandler(
       res.status(404).json({
         success: false,
         message: "User not found",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -379,7 +379,7 @@ export const changePassword = asyncHandler(
       res.status(404).json({
         success: false,
         message: "User not found",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -390,7 +390,7 @@ export const changePassword = asyncHandler(
       res.status(401).json({
         success: false,
         message: "Current password is incorrect",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -434,7 +434,7 @@ export const updateProfile = asyncHandler(
       res.status(404).json({
         success: false,
         message: "User not found",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -469,7 +469,7 @@ export const forgotPassword = asyncHandler(
         success: true,
         message:
           "If an account with that email exists, a password reset link has been sent",
-      } as IApiResponse);
+      });
       return;
     }
 
@@ -485,7 +485,6 @@ export const forgotPassword = asyncHandler(
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
     // TODO: Send email using email service
-    console.log("Password reset URL:", resetUrl);
 
     // Log forgot password request
     await AuditService.log({
@@ -519,15 +518,10 @@ export const resetPassword = asyncHandler(
 
     try {
       // Verify reset token
-      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as any;
-
-      if (decoded.type !== "password-reset") {
-        res.status(400).json({
-          success: false,
-          message: "Invalid reset token",
-        } as IApiResponse);
-        return;
-      }
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_ACCESS_SECRET!,
+      ) as IJWTPayload;
 
       const user = await UserModel.findById(decoded.userId).select("+password");
 
@@ -535,7 +529,7 @@ export const resetPassword = asyncHandler(
         res.status(404).json({
           success: false,
           message: "User not found",
-        } as IApiResponse);
+        });
         return;
       }
 
@@ -572,14 +566,14 @@ export const resetPassword = asyncHandler(
         res.status(400).json({
           success: false,
           message: "Reset token has expired. Please request a new one.",
-        } as IApiResponse);
+        });
         return;
       }
 
       res.status(400).json({
         success: false,
         message: "Invalid or expired reset token",
-      } as IApiResponse);
+      });
     }
   },
 );

@@ -49,7 +49,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     });
 
     newSocket.on("connect", () => {
-      console.log("Socket connected");
       setConnected(true);
 
       // Join user-specific room
@@ -57,11 +56,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     });
 
     newSocket.on("disconnect", () => {
-      console.log("Socket disconnected");
       setConnected(false);
     });
 
-    newSocket.on("error", (error: any) => {
+    newSocket.on("error", (error) => {
       console.error("Socket error:", error);
     });
 

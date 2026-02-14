@@ -5,8 +5,8 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
 export const authKeys = {
-  all: ["auth"] as const,
-  currentUser: () => [...authKeys.all, "current-user"] as const,
+  all: ["auth"],
+  currentUser: () => [...authKeys.all, "current-user"],
 };
 
 export const useCurrentUser = () => {
@@ -37,8 +37,8 @@ export const useLogin = () => {
         navigate("/dashboard");
       }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Login failed");
+    onError: () => {
+      toast.error("Login failed");
     },
   });
 };
@@ -59,8 +59,8 @@ export const useRegister = () => {
         navigate("/dashboard");
       }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Registration failed");
+    onError: () => {
+      toast.error("Registration failed");
     },
   });
 };

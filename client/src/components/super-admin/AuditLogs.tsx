@@ -22,6 +22,7 @@ import {
 import { Download } from "@mui/icons-material";
 import { format } from "date-fns";
 import type { AxiosResponse } from "axios";
+import type { AuditLog } from "../../types";
 
 const AuditLogs: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -47,7 +48,6 @@ const AuditLogs: React.FC = () => {
       return response.data;
     },
   });
-  console.log("🚀 ~ AuditLogs ~ data:", data);
 
   const handleExport = async () => {
     try {
@@ -55,7 +55,6 @@ const AuditLogs: React.FC = () => {
         format: "csv",
         filters,
       });
-      // Handle download
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
@@ -199,7 +198,7 @@ const AuditLogs: React.FC = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              data?.data?.map((log: any) => (
+              data?.data?.map((log: AuditLog) => (
                 <TableRow key={log._id} hover>
                   <TableCell>
                     {format(new Date(log.timestamp), "MMM dd, yyyy HH:mm:ss")}

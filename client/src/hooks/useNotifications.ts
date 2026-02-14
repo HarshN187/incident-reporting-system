@@ -6,7 +6,7 @@ interface Notification {
   id: string;
   type: string;
   message: string;
-  data: any;
+  data: Record<string, any> | string;
   timestamp: Date;
 }
 
@@ -24,7 +24,7 @@ export const useNotifications = (): UseNotificationsResult => {
     if (!socket) return;
 
     // Listen for incident updates
-    socket.on("incident:updated", (data: any) => {
+    socket.on("incident:updated", (data) => {
       const notification: Notification = {
         id: Date.now().toString(),
         type: "incident:updated",
@@ -38,7 +38,7 @@ export const useNotifications = (): UseNotificationsResult => {
     });
 
     // Listen for new incidents (for admins)
-    socket.on("incident:created", (data: any) => {
+    socket.on("incident:created", (data) => {
       const notification: Notification = {
         id: Date.now().toString(),
         type: "incident:created",
@@ -52,7 +52,7 @@ export const useNotifications = (): UseNotificationsResult => {
     });
 
     // Listen for status changes
-    socket.on("incident:status-changed", (data: any) => {
+    socket.on("incident:status-changed", (data) => {
       const notification: Notification = {
         id: Date.now().toString(),
         type: "incident:status-changed",
@@ -66,7 +66,7 @@ export const useNotifications = (): UseNotificationsResult => {
     });
 
     // Listen for assignments
-    socket.on("incident:assigned", (data: any) => {
+    socket.on("incident:assigned", (data) => {
       const notification: Notification = {
         id: Date.now().toString(),
         type: "incident:assigned",

@@ -24,11 +24,11 @@ router.post("/register", authLimiter, validate(registerSchema), register);
 router.post("/login", authLimiter, validate(loginSchema), login);
 
 router.post("/refresh-token", refreshToken);
-router.post("/forgot-password", authLimiter, forgotPassword); //forgotPasswordSchema
-router.post("/reset-password/:token", resetPassword); //resetPasswordSchema
+router.post("/forgot-password", authLimiter, forgotPassword);
+router.post("/reset-password/:token", resetPassword);
 
 // Protected routes
-router.use(verifyAccessToken); // All routes below require authentication
+router.use(verifyAccessToken);
 
 router.post("/logout", logout);
 router.get("/me", getCurrentUser);

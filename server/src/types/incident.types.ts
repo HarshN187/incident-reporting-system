@@ -1,4 +1,5 @@
 import { Document, Types } from "mongoose";
+import { IUser } from "./user.types";
 
 export enum IncidentCategory {
   PHISHING = "phishing",
@@ -51,8 +52,8 @@ export interface IIncident {
   priority: IncidentPriority;
   severity: number;
   status: IncidentStatus;
-  reportedBy: Types.ObjectId;
-  assignedTo?: string;
+  reportedBy: Types.ObjectId | IUser;
+  assignedTo?: string | IUser;
   evidenceFiles: IEvidenceFile[];
   resolutionNotes?: string;
   resolvedAt?: Date;
@@ -102,6 +103,10 @@ export interface IIncidentFilters {
   dateFrom?: Date;
   dateTo?: Date;
   search?: string;
+  incidentId?: string;
+  page?: string;
+  sortBy?: string;
+  limit?: string;
 }
 
 export interface IBulkUpdate {

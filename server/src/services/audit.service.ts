@@ -1,3 +1,4 @@
+import { RootFilterQuery } from "mongoose";
 import { AuditLogModel } from "../models";
 import {
   IAuthRequest,
@@ -9,6 +10,7 @@ import {
   AuditStatus,
   UserRole,
   IIncidentDocument,
+  IUser,
 } from "../types";
 
 interface LogParams {
@@ -195,9 +197,8 @@ export class AuditService {
   ): Promise<IPaginationResult<IAuditLog>> {
     const { page = 1, limit = 50, sortBy = "-timestamp" } = pagination;
 
-    const query: any = {};
+    const query: RootFilterQuery<IAuditLog> = {};
 
-    // Build query from filters
     if (filters.action) query.action = filters.action;
     if (filters.performedBy) query.performedBy = filters.performedBy;
     if (filters.targetId) query.targetId = filters.targetId;
@@ -220,7 +221,7 @@ export class AuditService {
       .lean();
 
     return {
-      data: logs as IAuditLog[],
+      data: logs,
       pagination: {
         page,
         limit,
@@ -229,8 +230,6 @@ export class AuditService {
       },
     };
   }
-
-  // Add these methods to the AuditService class
 
   static async getLogById(id: string): Promise<IAuditLog | null> {
     try {
@@ -249,7 +248,7 @@ export class AuditService {
     format: "csv" | "pdf",
     filters: IAuditFilters = {},
   ): Promise<string> {
-    const query: any = {};
+    const query: RootFilterQuery<IAuditLog> = {};
 
     if (filters.action) query.action = filters.action;
     if (filters.performedBy) query.performedBy = filters.performedBy;
@@ -265,7 +264,6 @@ export class AuditService {
       .populate("performedBy", "username email")
       .sort("-timestamp")
       .lean();
-    console.log("🚀 ~ AuditService ~ exportLogs ~ logs:", logs);
 
     if (format === "csv") {
       const { Parser } = require("json2csv");
@@ -281,10 +279,8 @@ export class AuditService {
       ];
 
       const parser = new Parser({ fields });
-      console.log("🚀 ~ AuditService ~ exportLogs ~ parser:", parser);
       return parser.parse(logs);
     } else {
-      // PDF export implementation
       const PDFDocument = require("pdfkit");
       const fs = require("fs");
       const path = require("path");
@@ -302,12 +298,14 @@ export class AuditService {
         doc.fontSize(12).text(`Generated: ${new Date().toLocaleString()}`);
         doc.moveDown();
 
-        logs.forEach((log: any, index: number) => {
+        logs.forEach((log: IAuditLog, index: number) => {
           if (index > 0) doc.moveDown();
           doc
             .fontSize(10)
             .text(`${index + 1}. ${log.action}`, { bold: true })
-            .text(`Performed by: ${log.performedBy?.username || "N/A"}`)
+            .text(
+              `Performed by: ${(log.performedBy as IUser)?.username || "N/A"}`,
+            )
             .text(`IP: ${log.ipAddress}`)
             .text(`Time: ${new Date(log.timestamp).toLocaleString()}`);
 

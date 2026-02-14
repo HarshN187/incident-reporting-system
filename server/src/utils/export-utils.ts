@@ -2,8 +2,9 @@ import { Parser } from "json2csv";
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
+import { IIncident, IUser } from "../types";
 
-export const exportToCSV = (incidents: any[]): string => {
+export const exportToCSV = (incidents: IIncident[]): string => {
   const fields = [
     { label: "ID", value: "_id" },
     { label: "Title", value: "title" },
@@ -22,13 +23,12 @@ export const exportToCSV = (incidents: any[]): string => {
   return parser.parse(incidents);
 };
 
-export const exportToPDF = async (incidents: any[]): Promise<string> => {
+export const exportToPDF = async (incidents: IIncident[]): Promise<string> => {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50 });
     const filename = `incidents-export-${Date.now()}.pdf`;
     const filepath = path.join(__dirname, "../../exports", filename);
 
-    // Ensure exports directory exists
     const exportDir = path.join(__dirname, "../../exports");
     if (!fs.existsSync(exportDir)) {
       fs.mkdirSync(exportDir, { recursive: true });
@@ -69,10 +69,14 @@ export const exportToPDF = async (incidents: any[]): Promise<string> => {
         .text(`Status: ${incident.status}`)
         .text(`Priority: ${incident.priority}`)
         .text(`Created: ${new Date(incident.createdAt).toLocaleDateString()}`)
-        .text(`Reported By: ${incident.reportedBy?.username || "N/A"}`);
+        .text(
+          `Reported By: ${(incident.reportedBy as IUser)?.username || "N/A"}`,
+        );
 
       if (incident.assignedTo) {
-        doc.text(`Assigned To: ${incident.assignedTo.username}`);
+        doc.text(
+          `Assigned To: ${(incident.assignedTo as IUser)?.username || "N/A"}`,
+        );
       }
 
       if (incident.resolvedAt) {

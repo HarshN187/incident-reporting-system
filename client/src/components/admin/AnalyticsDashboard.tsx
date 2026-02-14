@@ -52,7 +52,6 @@ const AnalyticsDashboard: React.FC = () => {
     }),
   );
 
-  // Calculate Open vs Resolved for pie chart
   const openVsResolved = [
     { name: "Open", value: analytics.statusStats.open, color: COLORS.open },
     {

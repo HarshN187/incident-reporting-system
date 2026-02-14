@@ -87,7 +87,6 @@ const IncidentManagement: React.FC = () => {
   const [selectedAdmin, setSelectedAdmin] = useState("");
   const [exportFormat, setExportFormat] = useState<"csv" | "pdf">("csv");
 
-  // Queries and Mutations
   const { data: incidents, isLoading, refetch } = useIncidents(filters);
   const { data: users } = useUsers({ role: "admin,superadmin", limit: 100 });
   const updateStatusMutation = useUpdateIncidentStatus();
@@ -95,10 +94,9 @@ const IncidentManagement: React.FC = () => {
   const bulkUpdateMutation = useBulkUpdateIncidents();
   const exportMutation = useExportIncidents();
 
-  // Handlers
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const allIds = incidents?.data.map((inc: any) => inc._id) || [];
+      const allIds = incidents?.data.map((inc) => inc._id) || [];
       setSelectedIncidents(allIds);
     } else {
       setSelectedIncidents([]);
@@ -614,11 +612,9 @@ const IncidentManagement: React.FC = () => {
               label="Select Admin"
               onChange={(e) => setSelectedAdmin(e.target.value)}
             >
-              {(users as any)?.data?.data
-                ?.filter((user: any) =>
-                  ["admin", "superadmin"].includes(user.role),
-                )
-                .map((admin: any) => (
+              {users?.data
+                ?.filter((user) => ["admin", "superadmin"].includes(user.role))
+                .map((admin) => (
                   <MenuItem key={admin._id} value={admin._id}>
                     {admin.username} ({admin.email}) -{" "}
                     {admin.role.toUpperCase()}
@@ -695,11 +691,11 @@ const IncidentManagement: React.FC = () => {
                 label="Select Admin"
                 onChange={(e) => setSelectedAdmin(e.target.value)}
               >
-                {(users as any)?.data?.data
-                  ?.filter((user: any) =>
+                {users?.data
+                  ?.filter((user) =>
                     ["admin", "superadmin"].includes(user.role),
                   )
-                  .map((admin: any) => (
+                  .map((admin) => (
                     <MenuItem key={admin._id} value={admin._id}>
                       {admin.username} - {admin.role.toUpperCase()}
                     </MenuItem>
