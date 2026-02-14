@@ -66,12 +66,12 @@ export const errorHandler = async (
     });
     return;
   }
-
+  console.log(err.message);
   // Mongoose cast error (invalid ObjectId)
   if (err.name === "CastError") {
     res.status(400).json({
       success: false,
-      message: "Invalid ID format",
+      message: err.message,
     });
     return;
   }

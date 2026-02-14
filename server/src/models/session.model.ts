@@ -5,7 +5,7 @@ const sessionSchema = new Schema<ISessionDocument>(
   {
     userId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "users",
       required: true,
     },
     refreshToken: {
@@ -40,7 +40,6 @@ const sessionSchema = new Schema<ISessionDocument>(
 
 // Indexes
 sessionSchema.index({ userId: 1, isValid: 1 });
-sessionSchema.index({ refreshToken: 1 });
 sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export const SessionModel: Model<ISessionDocument> =

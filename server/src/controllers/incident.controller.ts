@@ -106,7 +106,7 @@ export const getIncidents = asyncHandler(
         { description: { $regex: search, $options: "i" } },
       ];
     }
-
+    console.log(query);
     // Execute query with pagination
     const totalCount = await IncidentModel.countDocuments(query);
 
@@ -362,6 +362,7 @@ export const bulkUpdateIncidents = asyncHandler(
   async (req: IAuthRequest, res: Response) => {
     const { incidentIds, status, assignedTo, resolutionNotes }: IBulkUpdate =
       req.body;
+    console.log("🚀 ~ incidentIds:", incidentIds);
 
     if (!incidentIds || incidentIds.length === 0) {
       res.status(400).json({

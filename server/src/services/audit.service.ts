@@ -265,6 +265,7 @@ export class AuditService {
       .populate("performedBy", "username email")
       .sort("-timestamp")
       .lean();
+    console.log("🚀 ~ AuditService ~ exportLogs ~ logs:", logs);
 
     if (format === "csv") {
       const { Parser } = require("json2csv");
@@ -280,6 +281,7 @@ export class AuditService {
       ];
 
       const parser = new Parser({ fields });
+      console.log("🚀 ~ AuditService ~ exportLogs ~ parser:", parser);
       return parser.parse(logs);
     } else {
       // PDF export implementation

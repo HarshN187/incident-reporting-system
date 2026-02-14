@@ -11,7 +11,16 @@ import {
 } from "../controllers";
 
 import { UserRole } from "../types";
-import { checkRolePermission, verifyAccessToken } from "../middlewares";
+import {
+  checkRolePermission,
+  validate,
+  verifyAccessToken,
+} from "../middlewares";
+import {
+  changeRoleSchema,
+  createUserSchema,
+  updateUserSchema,
+} from "../validators";
 
 const router: Router = express.Router();
 
@@ -21,10 +30,10 @@ router.use(checkRolePermission(UserRole.SUPERADMIN));
 
 router.get("/", getAllUsers);
 router.get("/:id", getUser);
-router.post("/", createUser);
-router.patch("/:id", updateUser);
+router.post("/", validate(createUserSchema), createUser);
+router.patch("/:id", validate(updateUserSchema), updateUser);
 router.delete("/:id", deleteUser);
-router.patch("/:id/role", changeUserRole);
+router.patch("/:id/role", validate(changeRoleSchema), changeUserRole);
 router.patch("/:id/block", blockUser);
 router.patch("/:id/unblock", unblockUser);
 

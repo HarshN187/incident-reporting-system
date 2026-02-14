@@ -17,7 +17,7 @@ const evidenceFileSchema = new Schema({
 
 const activityLogSchema = new Schema({
   action: { type: String, required: true },
-  performedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  performedBy: { type: Schema.Types.ObjectId, ref: "users", required: true },
   timestamp: { type: Date, default: Date.now },
   details: { type: String },
 });
@@ -59,12 +59,12 @@ const incidentSchema = new Schema<IIncidentDocument>(
     },
     reportedBy: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "users",
       required: true,
     },
     assignedTo: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "users",
       default: null,
     },
     evidenceFiles: [evidenceFileSchema],
@@ -78,7 +78,7 @@ const incidentSchema = new Schema<IIncidentDocument>(
     },
     resolvedBy: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "users",
       default: null,
     },
     resolutionTime: {

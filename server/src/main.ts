@@ -10,10 +10,12 @@ dotenv.config();
 
 // Import routes
 import authRoutes from "./routes/auth.routes";
-import incidentRoutes from "./routes/incident.routes";  
+import incidentRoutes from "./routes/incident.routes";
 import userRoutes from "./routes/users.routes";
 import analyticsRoutes from "./routes/analytics.routes";
 import auditRoutes from "./routes/audit.routes";
+import exportRoutes from "./routes/export.routes";
+import uploadRoutes from "./routes/upload.routes";
 
 // Import middleware
 import { apiLimiter, errorHandler } from "./middlewares";
@@ -33,7 +35,7 @@ app.set("io", io);
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   }),
 );
@@ -50,6 +52,8 @@ app.use("/api/v1/incidents", incidentRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
 app.use("/api/v1/audit-logs", auditRoutes);
+app.use("/api/v1/export", exportRoutes);
+app.use("/api/v1/upload", uploadRoutes);
 
 // Health check
 app.get("/health", (_req, res) => {

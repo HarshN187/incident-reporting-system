@@ -10,16 +10,22 @@ import {
   resetPassword,
   updateProfile,
 } from "../controllers";
-import { authLimiter, verifyAccessToken } from "../middlewares";
+import { authLimiter, validate, verifyAccessToken } from "../middlewares";
+import {
+  changePasswordSchema,
+  loginSchema,
+  registerSchema,
+} from "../validators";
 
 const router: Router = express.Router();
 
 // Public routes with rate limiting
-router.post("/register", authLimiter, register);
-router.post("/login", authLimiter, login);
+router.post("/register", authLimiter, validate(registerSchema), register);
+router.post("/login", authLimiter, validate(loginSchema), login);
+
 router.post("/refresh-token", refreshToken);
-router.post("/forgot-password", authLimiter, forgotPassword);
-router.post("/reset-password/:token", resetPassword);
+router.post("/forgot-password", authLimiter, forgotPassword); //forgotPasswordSchema
+router.post("/reset-password/:token", resetPassword); //resetPasswordSchema
 
 // Protected routes
 router.use(verifyAccessToken); // All routes below require authentication
@@ -27,6 +33,10 @@ router.use(verifyAccessToken); // All routes below require authentication
 router.post("/logout", logout);
 router.get("/me", getCurrentUser);
 router.patch("/update-profile", updateProfile);
-router.patch("/change-password", changePassword);
+router.patch(
+  "/change-password",
+  validate(changePasswordSchema),
+  changePassword,
+);
 
 export default router;

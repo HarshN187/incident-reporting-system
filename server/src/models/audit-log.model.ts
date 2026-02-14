@@ -16,7 +16,7 @@ const auditLogSchema = new Schema<IAuditLogDocument>(
     },
     performedBy: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "users",
       required: true,
     },
     userRole: {

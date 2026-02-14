@@ -37,7 +37,7 @@ export const exportIncidents = asyncHandler(
       .lean();
 
     // Log export
-    await AuditService.log({
+    await AuditService. log({
       action: AuditAction.DATA_EXPORT,
       performedBy: req.user!.userId,
       userRole: req.user!.role,

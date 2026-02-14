@@ -67,7 +67,7 @@ const userSchema = new Schema<IUserDocument>(
     },
     createdBy: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "users",
     },
   },
   {
