@@ -99,3 +99,54 @@ export const useBulkUpdateIncidents = () => {
     },
   });
 };
+
+export const useExportIncidents = () => {
+  return useMutation({
+    mutationFn: async ({
+      format,
+      filters,
+    }: {
+      format: "csv" | "pdf";
+      filters?: Record<string, any>;
+    }) => {
+      const blob = await incidentService.exportIncidents(format, filters);
+      return blob;
+    },
+    onSuccess: (blob: Blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const isPdf = blob.type.includes("pdf");
+      const ext = isPdf ? "pdf" : "csv";
+      const filename = `incidents-export-${Date.now()}.${ext}`;
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Export started");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Export failed");
+    },
+  });
+};
+
+export const useAssignIncident = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, assignedTo }: { id: string; assignedTo: string }) =>
+      incidentService.assignIncident(id, assignedTo),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: incidentKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: incidentKeys.detail(variables.id),
+      });
+      toast.success("Incident assigned successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to assign incident");
+    },
+  });
+};

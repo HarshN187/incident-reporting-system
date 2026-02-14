@@ -36,7 +36,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     if (!user || !token) return;
 
     const SOCKET_URL =
-      import.meta.env.env.REACT_APP_SOCKET_URL || "http://localhost:5000";
+      import.meta.env.REACT_APP_SOCKET_URL || "http://localhost:5000";
 
     const newSocket = io(SOCKET_URL, {
       auth: {

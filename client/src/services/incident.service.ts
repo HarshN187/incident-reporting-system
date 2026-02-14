@@ -92,7 +92,7 @@ class IncidentService {
     filters: IncidentFilters = {},
   ): Promise<Blob> {
     const response = await api.post(
-      "/incidents/export",
+      "/export/incidents",
       { format, filters },
       { responseType: "blob" },
     );

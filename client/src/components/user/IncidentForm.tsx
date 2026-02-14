@@ -1,7 +1,6 @@
-import React, { useState, type FormEvent,type ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import incidentService from '../../services/incident.service';
-import type { IncidentCategory, IncidentPriority, EvidenceFile } from '../../types';
+import React, { useState, type FormEvent, type ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCreateIncident } from "../../hooks";
 import {
   Box,
   Button,
@@ -12,52 +11,73 @@ import {
   CircularProgress,
   Paper,
   Chip,
-  Container,
-} from '@mui/material';
-import { toast } from 'react-toastify';
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  LinearProgress,
+} from "@mui/material";
+import { Delete, CloudUpload } from "@mui/icons-material";
+import { toast } from "react-toastify";
+import type { IncidentCategory, IncidentPriority } from "../../types";
 
-const categories: IncidentCategory[] = [
-  'phishing',
-  'malware',
-  'ransomware',
-  'unauthorized_access',
-  'data_breach',
-  'ddos',
-  'social_engineering',
-  'insider_threat',
-  'other',
+const API_URL =
+  import.meta.env.REACT_APP_API_URL || "http://localhost:5000/api/v1";
+
+const categories = [
+  { value: "phishing", label: "Phishing" },
+  { value: "malware", label: "Malware" },
+  { value: "ransomware", label: "Ransomware" },
+  { value: "unauthorized_access", label: "Unauthorized Access" },
+  { value: "data_breach", label: "Data Breach" },
+  { value: "ddos", label: "DDoS Attack" },
+  { value: "social_engineering", label: "Social Engineering" },
+  { value: "insider_threat", label: "Insider Threat" },
+  { value: "other", label: "Other" },
 ];
 
-const priorities: IncidentPriority[] = ['low', 'medium', 'high', 'critical'];
+const priorities = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "critical", label: "Critical" },
+];
 
-export const IncidentForm: React.FC = () => {
+const IncidentForm: React.FC = () => {
   const navigate = useNavigate();
+  const createIncidentMutation = useCreateIncident();
 
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: '' as IncidentCategory | '',
-    priority: 'medium' as IncidentPriority,
+    title: "",
+    description: "",
+    category: "",
+    priority: "medium",
+    severity: 5,
   });
 
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState<string>('');
-  const [evidenceFiles, setEvidenceFiles] = useState<EvidenceFile[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
+  const [tagInput, setTagInput] = useState("");
+  const [evidenceFiles, setEvidenceFiles] = useState<any[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [validationError, setValidationError] = useState("");
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+    if (
+      tagInput.trim() &&
+      !tags.includes(tagInput.trim()) &&
+      tags.length < 10
+    ) {
       setTags([...tags, tagInput.trim()]);
-      setTagInput('');
+      setTagInput("");
     }
   };
 
@@ -65,50 +85,180 @@ export const IncidentForm: React.FC = () => {
     setTags(tags.filter((tag) => tag !== tagToDelete));
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError('');
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    if (!formData.category) {
-      setError('Please select a category');
+    // Validate file count
+    if (evidenceFiles.length + files.length > 5) {
+      toast.error("Maximum 5 files allowed");
+      event.target.value = ""; // Reset input
       return;
     }
 
-    setLoading(true);
+    // Validate file size (10MB each)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].size > MAX_SIZE) {
+        toast.error(`File ${files[i].name} exceeds 10MB limit`);
+        event.target.value = ""; // Reset input
+        return;
+      }
+    }
+
+    // Validate file types
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    for (let i = 0; i < files.length; i++) {
+      if (!allowedTypes.includes(files[i].type)) {
+        toast.error(`File type ${files[i].type} is not allowed`);
+        event.target.value = ""; // Reset input
+        return;
+      }
+    }
+
+    setUploadingFiles(true);
+    setUploadProgress(0);
 
     try {
-      const response = await incidentService.createIncident({
-        ...formData,
-        category: formData.category as IncidentCategory,
-        evidenceFiles,
-        tags,
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append("evidence", files[i]);
+      }
+
+      const xhr = new XMLHttpRequest();
+
+      // Track upload progress
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 100;
+          setUploadProgress(percentComplete);
+        }
       });
 
-      if (response.success) {
-        toast.success('Incident created successfully');
-        navigate('/incidents');
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create incident');
-    } finally {
-      setLoading(false);
+      // Handle completion
+      xhr.addEventListener("load", () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          if (response.success) {
+            // Add uploaded files to state
+            setEvidenceFiles([...evidenceFiles, ...response.data]);
+            toast.success(`${files.length} file(s) uploaded successfully`);
+            event.target.value = ""; // Reset input
+          } else {
+            toast.error(response.message || "Upload failed");
+          }
+        } else {
+          toast.error("Upload failed");
+        }
+        setUploadingFiles(false);
+        setUploadProgress(0);
+      });
+
+      // Handle error
+      xhr.addEventListener("error", () => {
+        toast.error("Upload failed");
+        setUploadingFiles(false);
+        setUploadProgress(0);
+      });
+
+      // Send request
+      xhr.open("POST", `${API_URL}/upload/evidence`);
+      xhr.setRequestHeader(
+        "Authorization",
+        `Bearer ${localStorage.getItem("accessToken")}`,
+      );
+      xhr.send(formData);
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error("File upload failed");
+      setUploadingFiles(false);
+      setUploadProgress(0);
+      event.target.value = ""; // Reset input
     }
   };
 
+  const handleDeleteFile = (index: number) => {
+    const newFiles = evidenceFiles.filter((_, i) => i !== index);
+    setEvidenceFiles(newFiles);
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("🔥 Form Submitted");
+
+    setValidationError("");
+
+    // Validation
+    if (!formData.title || formData.title.length < 5) {
+      setValidationError("Title must be at least 5 characters");
+      return;
+    }
+
+    if (!formData.description || formData.description.length < 10) {
+      setValidationError("Description must be at least 10 characters");
+      return;
+    }
+
+    if (!formData.category) {
+      setValidationError("Please select a category");
+      return;
+    }
+
+    // Prepare incident data with evidence files
+    const incidentData = {
+      title: formData.title,
+      description: formData.description,
+      category: formData.category as IncidentCategory,
+      priority: formData.priority as IncidentPriority,
+      severity: Number(formData.severity),
+      tags: tags,
+      evidenceFiles: evidenceFiles, // Include uploaded files
+    };
+    console.log("🚀 ~ handleSubmit ~ incidentData:", incidentData);
+
+    createIncidentMutation.mutate(incidentData, {
+      onSuccess: () => {
+        navigate("/incidents");
+      },
+      onError: (error: any) => {
+        console.error("Create incident error:", error);
+        setValidationError(
+          error.response?.data?.message || "Failed to create incident",
+        );
+      },
+    });
+  };
+
   return (
-    <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+    <Box sx={{ p: 3, maxWidth: 800, mx: "auto" }}>
+      <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h5" gutterBottom>
           Report New Incident
         </Typography>
 
-        {error && (
+        {validationError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+            {validationError}
+          </Alert>
+        )}
+
+        {createIncidentMutation.isError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {createIncidentMutation.error?.response?.data?.message ||
+              "Failed to create incident"}
           </Alert>
         )}
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
+          {/* Title */}
           <TextField
             fullWidth
             required
@@ -117,22 +267,26 @@ export const IncidentForm: React.FC = () => {
             value={formData.title}
             onChange={handleChange}
             margin="normal"
-            disabled={loading}
+            disabled={createIncidentMutation.isPending}
+            helperText="Minimum 5 characters"
           />
 
+          {/* Description */}
           <TextField
             fullWidth
             required
             multiline
             rows={4}
-            label="Description"
+            label="Detailed Description"
             name="description"
             value={formData.description}
             onChange={handleChange}
             margin="normal"
-            disabled={loading}
+            disabled={createIncidentMutation.isPending}
+            helperText="Minimum 10 characters. Describe what happened, when, and any other relevant details."
           />
 
+          {/* Category */}
           <TextField
             fullWidth
             required
@@ -142,15 +296,16 @@ export const IncidentForm: React.FC = () => {
             value={formData.category}
             onChange={handleChange}
             margin="normal"
-            disabled={loading}
+            disabled={createIncidentMutation.isPending}
           >
             {categories.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat.replace(/_/g, ' ').toUpperCase()}
+              <MenuItem key={cat.value} value={cat.value}>
+                {cat.label}
               </MenuItem>
             ))}
           </TextField>
 
+          {/* Priority */}
           <TextField
             fullWidth
             select
@@ -159,69 +314,170 @@ export const IncidentForm: React.FC = () => {
             value={formData.priority}
             onChange={handleChange}
             margin="normal"
-            disabled={loading}
+            disabled={createIncidentMutation.isPending}
           >
             {priorities.map((priority) => (
-              <MenuItem key={priority} value={priority}>
-                {priority.toUpperCase()}
+              <MenuItem key={priority.value} value={priority.value}>
+                {priority.label}
               </MenuItem>
             ))}
           </TextField>
 
+          {/* Severity */}
+          <TextField
+            fullWidth
+            type="number"
+            label="Severity (1-10)"
+            name="severity"
+            value={formData.severity}
+            onChange={handleChange}
+            margin="normal"
+            disabled={createIncidentMutation.isPending}
+            inputProps={{ min: 1, max: 10 }}
+            helperText="Rate the severity from 1 (low) to 10 (critical)"
+          />
+
+          {/* Tags */}
           <Box sx={{ mt: 2, mb: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Tags
+              Tags (Optional - Max 10)
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+            <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
               <TextField
                 size="small"
                 label="Add Tag"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     handleAddTag();
                   }
                 }}
-                disabled={loading}
+                disabled={createIncidentMutation.isPending || tags.length >= 10}
               />
-              <Button onClick={handleAddTag} variant="outlined" disabled={loading}>
+              <Button
+                onClick={handleAddTag}
+                variant="outlined"
+                disabled={createIncidentMutation.isPending || tags.length >= 10}
+              >
                 Add
               </Button>
             </Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
               {tags.map((tag) => (
                 <Chip
                   key={tag}
                   label={tag}
                   onDelete={() => handleDeleteTag(tag)}
-                  disabled={loading}
+                  disabled={createIncidentMutation.isPending}
                 />
               ))}
             </Box>
           </Box>
 
-          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+          {/* Evidence Upload */}
+          <Box sx={{ mt: 3, mb: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Evidence Files (Optional - Max 5 files, 10MB each)
+            </Typography>
+            <Typography
+              variant="caption"
+              color="textSecondary"
+              display="block"
+              gutterBottom
+            >
+              Accepted formats: JPG, PNG, GIF, PDF, DOC, DOCX
+            </Typography>
+
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<CloudUpload />}
+              disabled={
+                uploadingFiles ||
+                createIncidentMutation.isPending ||
+                evidenceFiles.length >= 5
+              }
+              fullWidth
+              sx={{ mt: 1, mb: 2 }}
+            >
+              {uploadingFiles
+                ? `Uploading... ${uploadProgress.toFixed(0)}%`
+                : "Upload Evidence"}
+              <input
+                type="file"
+                hidden
+                multiple
+                accept="image/jpeg,image/png,image/gif,application/pdf,.doc,.docx"
+                onChange={handleFileUpload}
+                disabled={uploadingFiles || evidenceFiles.length >= 5}
+              />
+            </Button>
+
+            {uploadingFiles && (
+              <LinearProgress
+                variant="determinate"
+                value={uploadProgress}
+                sx={{ mb: 2 }}
+              />
+            )}
+
+            {evidenceFiles.length > 0 && (
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Uploaded Files ({evidenceFiles.length}/5)
+                </Typography>
+                <List dense>
+                  {evidenceFiles.map((file, index) => (
+                    <ListItem key={index}>
+                      <ListItemText
+                        primary={file.originalName || file.filename}
+                        secondary={`${(file.size / 1024).toFixed(2)} KB`}
+                      />
+                      <ListItemSecondaryAction>
+                        <IconButton
+                          edge="end"
+                          onClick={() => handleDeleteFile(index)}
+                          disabled={createIncidentMutation.isPending}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
+          </Box>
+
+          {/* Submit Buttons */}
+          <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
             <Button
               type="submit"
               variant="contained"
               fullWidth
-              disabled={loading}
+              disabled={uploadingFiles}
             >
-              {loading ? <CircularProgress size={24} /> : 'Submit Incident'}
+              {createIncidentMutation.isPending ? (
+                <CircularProgress size={24} />
+              ) : (
+                "Submit Incident"
+              )}
             </Button>
             <Button
               variant="outlined"
               fullWidth
-              onClick={() => navigate('/incidents')}
-              disabled={loading}
+              onClick={() => navigate("/incidents")}
+              disabled={createIncidentMutation.isPending || uploadingFiles}
             >
               Cancel
             </Button>
           </Box>
         </Box>
       </Paper>
-    </Container>
+    </Box>
   );
 };
+
+export default IncidentForm;

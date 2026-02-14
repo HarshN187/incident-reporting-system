@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context';
-import { useNotifications } from '../../hooks';
-import incidentService from '../../services/incident.service';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useNotifications } from "../../hooks/useNotifications";
 import {
   Box,
   Grid,
@@ -16,13 +15,33 @@ import {
   ListItemText,
   Divider,
   Chip,
-} from '@mui/material';
-import { format } from 'date-fns';
+  Badge,
+  TextField,
+  MenuItem,
+  IconButton,
+  Alert,
+} from "@mui/material";
+import {
+  Notifications as NotificationsIcon,
+  Clear as ClearIcon,
+} from "@mui/icons-material";
+import { format } from "date-fns";
+import { useIncidents } from "../../hooks";
 
-export const UserDashboard: React.FC = () => {
+const UserDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { notifications } = useNotifications();
+  const { notifications, clearNotifications, clearNotification } =
+    useNotifications();
+
+  const [filters, setFilters] = useState({
+    status: "",
+    category: "",
+    sortBy: "-createdAt",
+    limit: 5,
+  });
+
+  const { data: incidents, isLoading } = useIncidents(filters);
 
   const [stats, setStats] = useState({
     total: 0,
@@ -30,157 +49,177 @@ export const UserDashboard: React.FC = () => {
     inProgress: 0,
     resolved: 0,
   });
-  const [recentIncidents, setRecentIncidents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const response = await incidentService.getIncidents({ limit: 5 });
-
-      if (response.success && response.data) {
-        const incidents = response.data.data;
-        setRecentIncidents(incidents);
-
-        // Calculate stats
-        setStats({
-          total: response.data.pagination.totalCount,
-          open: incidents.filter((i: any) => i.status === 'open').length,
-          inProgress: incidents.filter((i: any) => i.status === 'in_progress')
-            .length,
-          resolved: incidents.filter((i: any) => i.status === 'resolved').length,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-    } finally {
-      setLoading(false);
+    if (incidents?.pagination) {
+      setStats({
+        total: incidents.pagination.totalCount,
+        open: incidents.data.filter((i: any) => i.status === "open").length,
+        inProgress: incidents.data.filter(
+          (i: any) => i.status === "in_progress",
+        ).length,
+        resolved: incidents.data.filter((i: any) => i.status === "resolved")
+          .length,
+      });
     }
-  };
+  }, [incidents]);
 
   const getStatusColor = (
-    status: string
-  ): 'default' | 'primary' | 'success' | 'warning' => {
+    status: string,
+  ): "default" | "primary" | "success" | "warning" => {
     switch (status) {
-      case 'open':
-        return 'warning';
-      case 'in_progress':
-        return 'primary';
-      case 'resolved':
-        return 'success';
+      case "open":
+        return "warning";
+      case "in_progress":
+        return "primary";
+      case "resolved":
+        return "success";
       default:
-        return 'default';
+        return "default";
     }
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between' }}>
+      <Box
+        sx={{
+          mb: 3,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Typography variant="h4">
           Welcome, {user?.firstName || user?.username}!
         </Typography>
-        <Button
-          variant="contained"
-          onClick={() => navigate('/incidents/new')}
-        >
+        <Button variant="contained" onClick={() => navigate("/incidents/new")}>
           Report New Incident
         </Button>
       </Box>
 
+      {/* Real-time Notification Alert */}
+      {notifications.length > 0 && (
+        <Alert
+          severity="info"
+          sx={{ mb: 3 }}
+          action={
+            <IconButton size="small" onClick={clearNotifications}>
+              <ClearIcon />
+            </IconButton>
+          }
+        >
+          <strong>{notifications.length} new notification(s)</strong>
+        </Alert>
+      )}
+
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card sx={{ bgcolor: "primary.light", color: "white" }}>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Total Incidents
-              </Typography>
               <Typography variant="h4">{stats.total}</Typography>
+              <Typography>Total Incidents</Typography>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card sx={{ bgcolor: "warning.light", color: "white" }}>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Open
-              </Typography>
-              <Typography variant="h4" color="warning.main">
-                {stats.open}
-              </Typography>
+              <Typography variant="h4">{stats.open}</Typography>
+              <Typography>Open</Typography>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card sx={{ bgcolor: "info.light", color: "white" }}>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                In Progress
-              </Typography>
-              <Typography variant="h4" color="primary">
-                {stats.inProgress}
-              </Typography>
+              <Typography variant="h4">{stats.inProgress}</Typography>
+              <Typography>In Progress</Typography>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card>
+          <Card sx={{ bgcolor: "success.light", color: "white" }}>
             <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Resolved
-              </Typography>
-              <Typography variant="h4" color="success.main">
-                {stats.resolved}
-              </Typography>
+              <Typography variant="h4">{stats.resolved}</Typography>
+              <Typography>Resolved</Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
       <Grid container spacing={3}>
-        {/* Recent Incidents */}
+        {/* Recent Incidents with Filters */}
         <Grid item xs={12} md={8}>
           <Paper sx={{ p: 3 }}>
             <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                mb: 2,
-              }}
+              sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
             >
-              <Typography variant="h6">Recent Incidents</Typography>
-              <Button size="small" onClick={() => navigate('/incidents')}>
+              <Typography variant="h6">My Incidents</Typography>
+              <Button size="small" onClick={() => navigate("/incidents")}>
                 View All
               </Button>
             </Box>
 
-            {loading ? (
+            {/* Quick Filters */}
+            <Box sx={{ mb: 2, display: "flex", gap: 2 }}>
+              <TextField
+                size="small"
+                select
+                label="Status"
+                value={filters.status}
+                onChange={(e) =>
+                  setFilters({ ...filters, status: e.target.value })
+                }
+                sx={{ minWidth: 120 }}
+              >
+                <MenuItem value="">All</MenuItem>
+                <MenuItem value="open">Open</MenuItem>
+                <MenuItem value="in_progress">In Progress</MenuItem>
+                <MenuItem value="resolved">Resolved</MenuItem>
+              </TextField>
+
+              <TextField
+                size="small"
+                select
+                label="Sort By"
+                value={filters.sortBy}
+                onChange={(e) =>
+                  setFilters({ ...filters, sortBy: e.target.value })
+                }
+                sx={{ minWidth: 150 }}
+              >
+                <MenuItem value="-createdAt">Newest First</MenuItem>
+                <MenuItem value="createdAt">Oldest First</MenuItem>
+                <MenuItem value="-severity">Severity (High)</MenuItem>
+                <MenuItem value="severity">Severity (Low)</MenuItem>
+              </TextField>
+            </Box>
+
+            {isLoading ? (
               <Typography>Loading...</Typography>
-            ) : recentIncidents.length === 0 ? (
+            ) : incidents?.data.length === 0 ? (
               <Typography color="textSecondary">
                 No incidents reported yet
               </Typography>
             ) : (
               <List>
-                {recentIncidents.map((incident, index) => (
+                {incidents?.data.map((incident: any, index: number) => (
                   <React.Fragment key={incident._id}>
                     <ListItem
-                      sx={{ cursor: 'pointer' }}
+                      sx={{ cursor: "pointer" }}
                       onClick={() => navigate(`/incidents/${incident._id}`)}
                     >
                       <ListItemText
                         primary={
                           <Box
                             sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
                             }}
                           >
                             <Typography variant="subtitle1">
@@ -195,22 +234,24 @@ export const UserDashboard: React.FC = () => {
                         }
                         secondary={
                           <>
-                            <Typography
-                              variant="body2"
-                              color="textSecondary"
-                              component="span"
-                            >
-                              {incident.category.replace(/_/g, ' ')} •{' '}
+                            <Typography variant="body2" color="textSecondary">
+                              {incident.category
+                                .replace(/_/g, " ")
+                                .toUpperCase()}{" "}
+                              • Priority: {incident.priority.toUpperCase()} •
+                              Severity: {incident.severity}/10
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
                               {format(
                                 new Date(incident.createdAt),
-                                'MMM dd, yyyy'
+                                "MMM dd, yyyy HH:mm",
                               )}
                             </Typography>
                           </>
                         }
                       />
                     </ListItem>
-                    {index < recentIncidents.length - 1 && <Divider />}
+                    {index < incidents.data.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>
@@ -218,31 +259,60 @@ export const UserDashboard: React.FC = () => {
           </Paper>
         </Grid>
 
-        {/* Notifications */}
+        {/* Real-time Notifications Panel */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Recent Notifications
-            </Typography>
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
+            >
+              <Typography variant="h6">
+                <Badge badgeContent={notifications.length} color="error">
+                  <NotificationsIcon /> Notifications
+                </Badge>
+              </Typography>
+              {notifications.length > 0 && (
+                <Button size="small" onClick={clearNotifications}>
+                  Clear All
+                </Button>
+              )}
+            </Box>
 
             {notifications.length === 0 ? (
-              <Typography color="textSecondary">No new notifications</Typography>
+              <Typography color="textSecondary">
+                No new notifications
+              </Typography>
             ) : (
               <List>
-                {notifications.slice(0, 5).map((notification, index) => (
+                {notifications.map((notification, index) => (
                   <React.Fragment key={notification.id}>
                     <ListItem>
                       <ListItemText
                         primary={notification.message}
-                        secondary={format(
-                          notification.timestamp,
-                          'MMM dd, HH:mm'
-                        )}
+                        secondary={
+                          <>
+                            <Typography variant="caption">
+                              {format(
+                                notification.timestamp,
+                                "MMM dd, HH:mm:ss",
+                              )}
+                            </Typography>
+                            <br />
+                            <Typography variant="caption" color="primary">
+                              {notification.type
+                                .replace(/_/g, " ")
+                                .toUpperCase()}
+                            </Typography>
+                          </>
+                        }
                       />
+                      <IconButton
+                        size="small"
+                        onClick={() => clearNotification(notification.id)}
+                      >
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
                     </ListItem>
-                    {index < Math.min(notifications.length, 5) - 1 && (
-                      <Divider />
-                    )}
+                    {index < notifications.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>
@@ -253,3 +323,5 @@ export const UserDashboard: React.FC = () => {
     </Box>
   );
 };
+
+export default UserDashboard;

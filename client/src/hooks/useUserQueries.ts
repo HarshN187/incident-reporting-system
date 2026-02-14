@@ -25,6 +25,7 @@ export const useUsers = (filters: Record<string, any> = {}) => {
       const response = await api.get<ApiResponse<PaginatedResponse<User>>>(
         `/users?${params.toString()}`,
       );
+      console.log("🚀 ~ useUsers ~ response:", response);
       return response.data;
     },
   });
@@ -92,6 +93,64 @@ export const useDeleteUser = () => {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to delete user");
+    },
+  });
+};
+
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      username: string;
+      email: string;
+      password: string;
+      firstName?: string;
+      lastName?: string;
+      role?: string;
+      department?: string;
+    }) => {
+      const response = await api.post<ApiResponse<User>>("/users", data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      toast.success("User created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create user");
+    },
+  });
+};
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        firstName?: string;
+        lastName?: string;
+        email?: string;
+        department?: string;
+      };
+    }) => {
+      const response = await api.patch<ApiResponse<User>>(`/users/${id}`, data);
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: userKeys.detail(variables.id),
+      });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      toast.success("User updated successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to update user");
     },
   });
 };
